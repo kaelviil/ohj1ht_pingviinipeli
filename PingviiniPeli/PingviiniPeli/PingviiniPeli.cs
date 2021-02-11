@@ -16,6 +16,7 @@ public class PingviiniPeli : PhysicsGame
     private Image pelaajanKuva = LoadImage("pingviini.png"); //TODO: vaihda kuva oikeaan
     private Image kalaKuva = LoadImage("kala.png"); //TODO: vaihda kuva oikeaan
     private Image merileopardiKuva = LoadImage("merileopardi.png");  //TODO: vaihda kuva oikeaan
+    private Image taustakuva = LoadImage("tausta.png"); //TODO: vaihda oikeaan kuvaan
 
 
     private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: vaihda äänitehoste ja lisää äänitehosteet merileopardille, veteen ja maaliin
@@ -43,7 +44,8 @@ public class PingviiniPeli : PhysicsGame
         kentta.SetTileMethod('M', LisaaMerileopardi);
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
         Level.CreateBorders();
-        Level.Background.CreateGradient(Color.White, Color.SkyBlue); //TODO: vaihda oikeaan kuvaan
+        // Level.Background.CreateGradient(Color.White, Color.SkyBlue); //TODO: vaihda oikeaan kuvaan
+        Level.Background.Image = taustakuva;
     }
 
 
@@ -78,6 +80,7 @@ public class PingviiniPeli : PhysicsGame
         merileopardi.IgnoresCollisionResponse = false;
         merileopardi.Image = merileopardiKuva;
         merileopardi.Tag = "merileopardi";
+        // TODO: merileopardi.Hit();
         Add(merileopardi);
 
         //TODO: lisää liikkeet silmukalla
