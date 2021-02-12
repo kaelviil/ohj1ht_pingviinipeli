@@ -8,7 +8,9 @@ using System.Collections.Generic;
 ///@author Katri Viiliäinen
 ///@version 12.2.2021
 /// <summary>
-/// 
+/// Tasohyppelypeli, jossa pelaaja ohjaa pingviinihahmoa nuolinäppäimillä. 
+/// Pelaajan tavoitteena on kerätä mahdollisimman monta kalaa ennen maaliin pääsyään sekä
+/// väisteltävä lumileopardeja ja vettä.
 /// </summary>
 public class PingviiniPeli : PhysicsGame
 {
@@ -21,9 +23,9 @@ public class PingviiniPeli : PhysicsGame
     private Image pelaajanKavely = LoadImage("pingviinikavely.png");
     private Image pelaajanKuva = LoadImage("pingviini.png");
     private Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
-    private Image kalaKuva = LoadImage("kala.png"); //TODO: muokkaa kuvaa
+    private Image kalaKuva = LoadImage("kala.png");              //TODO: muokkaa kuvaa
     private Image merileopardiKuva = LoadImage("merileopardi.png"); 
-    private Image taustakuva = LoadImage("tausta.png"); //TODO: muokkaa kuvaa
+    private Image taustakuva = LoadImage("tausta.png");          //TODO: muokkaa kuvaa
 
 
     private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: vaihda äänitehoste ja lisää äänitehosteet merileopardille, veteen ja maaliin
@@ -45,6 +47,7 @@ public class PingviiniPeli : PhysicsGame
         Camera.StayInLevel = true;
     }
 
+
     /// <summary>
     /// Aliohjelmassa luodaan kenttä käyttäen erillistä tekstitiedostoa.
     /// Ks. Content kansiosta. # lisää tason, V lisää vettä, * lisää kalan, P lisää pelaajan 
@@ -60,10 +63,11 @@ public class PingviiniPeli : PhysicsGame
         kentta.SetTileMethod('M', LisaaMerileopardi);
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
         Level.CreateBorders();
-        // Level.Background.CreateGradient(Color.White, Color.SkyBlue); //TODO: vaihda oikeaan kuvaan
+        //TODO: POISTA Level.Background.CreateGradient(Color.White, Color.SkyBlue);
         Level.Background.Image = taustakuva;
         Level.Background.FitToLevel();
     }
+
 
     /// <summary>
     /// Aliohjelmassa kentän tasojen luomiseksi.
@@ -79,6 +83,7 @@ public class PingviiniPeli : PhysicsGame
         //TODO: Lisää tekstuuri
         Add(taso);
     }
+
 
     /// <summary>
     /// Aliohjelmassa veden luomiseksi.
@@ -118,6 +123,7 @@ public class PingviiniPeli : PhysicsGame
         Add(kala);
     }
 
+
     /// <summary>
     /// Aliohjelma merileopardien luomiseksi.
     /// </summary>
@@ -142,9 +148,6 @@ public class PingviiniPeli : PhysicsGame
     }
 
    
-
-   
-
     /// <summary>
     /// Aliohjelmassa määritellään pelaajan hahmon ominaisuuksia: massa, animaatiot ja 
     /// mitä pelaajalle tapahtuu muihin olioihin törmätessä.
@@ -259,7 +262,7 @@ public class PingviiniPeli : PhysicsGame
     }
 
 
-    //TODO: kun peli loppuu (maali, vesi, merileopradi) valikko
+    //TODO: KÄYTTÖLIITTYMÄ kun peli loppuu (maali, vesi, merileopradi) valikko
     //tulokset sekä pelin lopetus ja mahdollisuus yrittää uudelleen (+ seuraava taso?)
 }
 
