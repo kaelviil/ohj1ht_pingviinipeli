@@ -7,6 +7,8 @@ using System.Collections.Generic;
 
 ///@author Katri Viiliäinen
 ///@version 12.2.2021
+///
+/// 
 /// <summary>
 /// Tasohyppelypeli, jossa pelaaja ohjaa pingviinihahmoa nuolinäppäimillä. 
 /// Pelaajan tavoitteena on kerätä mahdollisimman monta kalaa ennen maaliin pääsyään sekä
@@ -19,16 +21,20 @@ public class PingviiniPeli : PhysicsGame
     private const int RUUDUN_KOKO = 40;
 
     private PlatformCharacter pelaaja1;
+    private PhysicsObject merileopardi;
 
     private Image pelaajanKavely = LoadImage("pingviinikavely.png");
     private Image pelaajanKuva = LoadImage("pingviini.png");
     private Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
     private Image kalaKuva = LoadImage("kala.png");              //TODO: muokkaa kuvaa
-    private Image merileopardiKuva = LoadImage("merileopardi.png"); 
+    private Image merileopardiKuva = LoadImage("merileopardi.png");
     private Image taustakuva = LoadImage("tausta.png");          //TODO: muokkaa kuvaa
 
 
-    private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: vaihda äänitehoste ja lisää äänitehosteet merileopardille, veteen ja maaliin
+    private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: muuta äänitehoste
+    //TODO: private SoundEffect merileopardiAani = LoadSoundEffect("merileopardi.wav")
+    //TODO: private SoundEffect maaliAani = LoadSoundEffect("maali.wav")
+
 
 
     /// <summary>
@@ -91,7 +97,7 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="paikka">Paikka, johon vesipalikat luodaan</param>
     /// <param name="leveys">Vesipalikan leveys</param>
     /// <param name="korkeus">Vesipalikan korkeus</param>
-    public void LisaaVesi (Vector paikka, double leveys, double korkeus)
+    public void LisaaVesi(Vector paikka, double leveys, double korkeus)
     {
         PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
         vesi.Position = paikka;
@@ -127,27 +133,48 @@ public class PingviiniPeli : PhysicsGame
     /// <summary>
     /// Aliohjelma merileopardien luomiseksi.
     /// </summary>
-    /// <param name="paikka">Paikka, merileopardit luodaan</param>
+    /// <param name="paikka">Paikka, johon merileopardit luodaan</param>
     /// <param name="leveys">Merileopardin leveys</param>
     /// <param name="korkeus">Merileopardin korkeus</param>
-    public void LisaaMerileopardi (Vector paikka, double leveys, double korkeus)
+    public void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject merileopardi = new PhysicsObject (40.0, 40.0);
-        
-        merileopardi.IgnoresCollisionResponse = false;
+        merileopardi = new PhysicsObject (40.0, 40.0);
+        merileopardi.Position = paikka;
+        merileopardi.Restitution = 0.0;
         merileopardi.Image = merileopardiKuva;
         merileopardi.Tag = "merileopardi";
-        merileopardi.Restitution = 0;
-        Vector impulssi = new Vector(70.0, 50.0);
-        merileopardi.Hit(impulssi);
+        MerileopardiLiiku();
+        merileopardi.Mass = 1.0;
+
 
         Add(merileopardi);
 
         //TODO: lisää liikkeet
-        // erillinen aliohjelmansa? liikkuu edestakaisin tiettyä väliä tasolla
+        // erillinen aliohjelmansa? liikkuu edestakaisin tiettyä väliä 
+        // esim paikka -100 kääntyy takaisin ja liikkuu kunnes paikka + 100?
+        
+
+
+
+
+
     }
 
-   
+
+    public void MerileopardiLiiku()
+    {
+
+
+        Vector liike = new Vector (1000,0)
+        merileopardi.Hit(liike);
+        // vaihtoehtoisesti merileopardi.Move(liike); tai .MoveTo
+        //merileopardi.StopVertical();
+        //merileopardi.StopAngular();
+
+
+    }
+
+
     /// <summary>
     /// Aliohjelmassa määritellään pelaajan hahmon ominaisuuksia: massa, animaatiot ja 
     /// mitä pelaajalle tapahtuu muihin olioihin törmätessä.
@@ -160,7 +187,6 @@ public class PingviiniPeli : PhysicsGame
         pelaaja1 = new PlatformCharacter(leveys, korkeus);
         pelaaja1.Position = paikka;
         pelaaja1.Mass = 4.0;
-        // TODO: posita? pelaaja1.Image = pelaajanKuva;
         pelaaja1.AnimWalk = new Animation(pelaajanKavely);      
         pelaaja1.AnimIdle = new Animation(pelaajanKuva);
         pelaaja1.AnimJump = new Animation(pelaajaHyppy);
@@ -169,7 +195,7 @@ public class PingviiniPeli : PhysicsGame
 
         AddCollisionHandler(pelaaja1, "kala", TormaaKalaan);
         AddCollisionHandler(pelaaja1, "merileopardi", TormaaMerileopardiin);   //TODO: Pystyykö vettä ja merileopardeja yhdistämään samaan törmäykseen?
-       AddCollisionHandler(pelaaja1, "vesi", TormaaVeteen);
+        AddCollisionHandler(pelaaja1, "vesi", TormaaVeteen);
         Add(pelaaja1);
     }
 
@@ -182,6 +208,7 @@ public class PingviiniPeli : PhysicsGame
     public void Liikuta(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Walk(nopeus);
+        
         
     }
 
