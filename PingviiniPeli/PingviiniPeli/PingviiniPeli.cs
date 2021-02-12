@@ -5,6 +5,11 @@ using Jypeli.Widgets;
 using System;
 using System.Collections.Generic;
 
+///@author Katri Viiliäinen
+///@version 12.2.2021
+/// <summary>
+/// 
+/// </summary>
 public class PingviiniPeli : PhysicsGame
 {
     private const double NOPEUS = 200;
@@ -13,15 +18,21 @@ public class PingviiniPeli : PhysicsGame
 
     private PlatformCharacter pelaaja1;
 
-    private Image pelaajanKuva = LoadImage("pingviini.png"); //TODO: vaihda kuva oikeaan
-    private Image kalaKuva = LoadImage("kala.png"); //TODO: vaihda kuva oikeaan
-    private Image merileopardiKuva = LoadImage("merileopardi.png");  //TODO: vaihda kuva oikeaan
-    private Image taustakuva = LoadImage("tausta.png"); //TODO: vaihda oikeaan kuvaan
+    private Image pelaajanKavely = LoadImage("pingviinikavely.png");
+    private Image pelaajanKuva = LoadImage("pingviini.png");
+    private Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
+    private Image kalaKuva = LoadImage("kala.png"); //TODO: muokkaa kuvaa
+    private Image merileopardiKuva = LoadImage("merileopardi.png"); 
+    private Image taustakuva = LoadImage("tausta.png"); //TODO: muokkaa kuvaa
 
 
     private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: vaihda äänitehoste ja lisää äänitehosteet merileopardille, veteen ja maaliin
 
 
+    /// <summary>
+    /// Luodaan kenttä, määritellään painovoima sekä kameran taso. 
+    /// Lisäksi kutsutaan pelaajan ohjaimia aliohjelmasta.
+    /// </summary>
     public override void Begin()
     {
         Gravity = new Vector(0, -1000);
@@ -34,11 +45,16 @@ public class PingviiniPeli : PhysicsGame
         Camera.StayInLevel = true;
     }
 
-
+    /// <summary>
+    /// Aliohjelmassa luodaan kenttä käyttäen erillistä tekstitiedostoa.
+    /// Ks. Content kansiosta. # lisää tason, V lisää vettä, * lisää kalan, P lisää pelaajan 
+    /// ja M lisää merileopardin. 
+    /// </summary>
     public void LuoKentta()
     {
         TileMap kentta = TileMap.FromLevelAsset("kentta1.txt"); //TODO: muuta kenttää
         kentta.SetTileMethod('#', LisaaTaso);
+        kentta.SetTileMethod('V', LisaaVesi);
         kentta.SetTileMethod('*', LisaaKala);
         kentta.SetTileMethod('P', LisaaPelaaja);
         kentta.SetTileMethod('M', LisaaMerileopardi);
@@ -46,22 +62,52 @@ public class PingviiniPeli : PhysicsGame
         Level.CreateBorders();
         // Level.Background.CreateGradient(Color.White, Color.SkyBlue); //TODO: vaihda oikeaan kuvaan
         Level.Background.Image = taustakuva;
+        Level.Background.FitToLevel();
     }
 
-
+    /// <summary>
+    /// Aliohjelmassa kentän tasojen luomiseksi.
+    /// </summary>
+    /// <param name="paikka">Paikka, johon taso luodaan</param>
+    /// <param name="leveys">Tason leveys</param>
+    /// <param name="korkeus"> Tason korkeus</param>
     public void LisaaTaso(Vector paikka, double leveys, double korkeus)
     {
         PhysicsObject taso = PhysicsObject.CreateStaticObject(leveys, korkeus);
         taso.Position = paikka;
         taso.Color = Color.White;
+        //TODO: Lisää tekstuuri
         Add(taso);
     }
 
+    /// <summary>
+    /// Aliohjelmassa veden luomiseksi.
+    /// </summary>
+    /// <param name="paikka">Paikka, johon vesipalikat luodaan</param>
+    /// <param name="leveys">Vesipalikan leveys</param>
+    /// <param name="korkeus">Vesipalikan korkeus</param>
+    public void LisaaVesi (Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        vesi.Position = paikka;
+        vesi.Color = Color.Blue;
+        vesi.IgnoresCollisionResponse = true;
+        vesi.Tag = "vesi";
+        //TODO:Lisää tekstuuri
+        Add(vesi);
+    }
 
-    //TODO: LisaaVesi
 
     //TODO: LisaaMaali
+    //TODO: LisaaLaskuri INTMETER, mallia Pong-pelistä
 
+
+    /// <summary>
+    /// Aliohjelma kalojen luomiseksi.
+    /// </summary>
+    /// <param name="paikka">Paikka, johon kalat luodaan</param>
+    /// <param name="leveys">Kalan leveys</param>
+    /// <param name="korkeus">Kalan korkeus</param>
     public void LisaaKala(Vector paikka, double leveys, double korkeus)
     {
         PhysicsObject kala = PhysicsObject.CreateStaticObject(leveys, korkeus);
@@ -72,7 +118,12 @@ public class PingviiniPeli : PhysicsGame
         Add(kala);
     }
 
-
+    /// <summary>
+    /// Aliohjelma merileopardien luomiseksi.
+    /// </summary>
+    /// <param name="paikka">Paikka, merileopardit luodaan</param>
+    /// <param name="leveys">Merileopardin leveys</param>
+    /// <param name="korkeus">Merileopardin korkeus</param>
     public void LisaaMerileopardi (Vector paikka, double leveys, double korkeus)
     {
         PhysicsObject merileopardi = new PhysicsObject (40.0, 40.0);
@@ -80,69 +131,115 @@ public class PingviiniPeli : PhysicsGame
         merileopardi.IgnoresCollisionResponse = false;
         merileopardi.Image = merileopardiKuva;
         merileopardi.Tag = "merileopardi";
-        // TODO: merileopardi.Hit();
+        merileopardi.Restitution = 0;
+        Vector impulssi = new Vector(70.0, 50.0);
+        merileopardi.Hit(impulssi);
+
         Add(merileopardi);
 
-        //TODO: lisää liikkeet silmukalla
+        //TODO: lisää liikkeet
         // erillinen aliohjelmansa? liikkuu edestakaisin tiettyä väliä tasolla
     }
 
+   
 
+   
 
-    //TODO: LisaaLaskuri INTMETER, mallia Pong-pelistä
-
-
+    /// <summary>
+    /// Aliohjelmassa määritellään pelaajan hahmon ominaisuuksia: massa, animaatiot ja 
+    /// mitä pelaajalle tapahtuu muihin olioihin törmätessä.
+    /// </summary>
+    /// <param name="paikka">Paikka, johon pelaaja luodaan</param>
+    /// <param name="leveys">Pelaajan hahmon leveys</param>
+    /// <param name="korkeus">Pelaajan hahmon korkeus</param>
     public void LisaaPelaaja(Vector paikka, double leveys, double korkeus)
     {
         pelaaja1 = new PlatformCharacter(leveys, korkeus);
         pelaaja1.Position = paikka;
         pelaaja1.Mass = 4.0;
-        pelaaja1.Image = pelaajanKuva;
+        // TODO: posita? pelaaja1.Image = pelaajanKuva;
+        pelaaja1.AnimWalk = new Animation(pelaajanKavely);      
+        pelaaja1.AnimIdle = new Animation(pelaajanKuva);
+        pelaaja1.AnimJump = new Animation(pelaajaHyppy);
+        //TODO: pelaaja1.AnimFall = new Animation();
+
+
         AddCollisionHandler(pelaaja1, "kala", TormaaKalaan);
-        AddCollisionHandler(pelaaja1, "merileopardi", TormaaMerileopardiin);
-        //TODO: Collision veteen
+        AddCollisionHandler(pelaaja1, "merileopardi", TormaaMerileopardiin);   //TODO: Pystyykö vettä ja merileopardeja yhdistämään samaan törmäykseen?
+       AddCollisionHandler(pelaaja1, "vesi", TormaaVeteen);
         Add(pelaaja1);
     }
 
 
-
+    /// <summary>
+    /// Määritellään pelaajan liike.
+    /// </summary>
+    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="nopeus">Hahmon nopeus liikuttaessa</param>
     public void Liikuta(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Walk(nopeus);
-        // hahmo.AnimWalk = ;
-        //TODO: lisää animaatiot
+        
     }
 
 
+    /// <summary>
+    /// Määritellään pelaajan hyppy.
+    /// </summary>
+    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="nopeus">Hahmon nopeus hypättäessä</param>
     public void Hyppaa(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Jump(nopeus);
-        //TODO: lisää animaatiot
+     
     }
 
 
+    /// <summary>
+    /// Kun pelaaja törmää kalaan kala tuhoutuu ja kuuluu ääni.
+    /// </summary>
+    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="kala">pelissä kerättävät esineet</param>
     public void TormaaKalaan(PhysicsObject hahmo, PhysicsObject kala)
     {
         kalaAani.Play();
-        MessageDisplay.Add("Keräsit kalan!");
+        MessageDisplay.Add("Keräsit kalan!"); //TODO: POISTA?
         kala.Destroy();
     }
 
+
+    /// <summary>
+    /// Kun pelaajaa törmää merileopardiin pelaajan hahmo tuhoutuu ja kuuluu ääni.
+    /// </summary>
+    /// <param name="hahmo"></param>
+    /// <param name="merileopardi"></param>
     public void TormaaMerileopardiin(PhysicsObject hahmo, PhysicsObject merileopardi)
     {
         //TODO: lisää äänitehosteet
-        MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan");
+        MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
         pelaaja1.Destroy();
         //TODO: pelille loppupiste
     }
 
-    //TODO: public void TormaaVeteen ()
-   // {
-           //peli loppuu: samoin tavoin kuin edellä
-   // }
+
+    /// <summary>
+    /// Kun pelaajaa törmää veteen pelaajan hahmo tuhoutuu ja kuuluu ääni.
+    /// </summary>
+    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="vesi">Vesi</param>
+    public void TormaaVeteen (PhysicsObject hahmo, PhysicsObject vesi)
+    {
+        //TODO: lisää äänitehosteet
+        MessageDisplay.Add("Voi ei, putosit veteen ja jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
+        pelaaja1.Destroy();
+        //TODO: pelille loppupiste
+    }
 
 
 
+    /// <summary>
+    /// Pelaajan käyttämien näppäinten määrittely
+    /// </summary>
     public void LisaaNappaimet()
     {
         Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
