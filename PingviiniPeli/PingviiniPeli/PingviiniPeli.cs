@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 
 ///@author Katri Viiliäinen
-///@version 12.2.2021
+///@version 15.2.2021
 ///
 /// 
 /// <summary>
@@ -18,10 +18,15 @@ public class PingviiniPeli : PhysicsGame
 {
     private const double NOPEUS = 200;
     private const double HYPPYNOPEUS = 750;
-    private const int RUUDUN_KOKO = 40;
+    private const int RUUDUN_KOKO = 30;
 
-    private PlatformCharacter pelaaja1;
+    private PlatformCharacter pelaaja;
     private PhysicsObject merileopardi;
+    private PhysicsObject kala;
+    private PhysicsObject vesi;
+    private PhysicsObject maali;
+
+    private IntMeter pelaajanPisteet;
 
     //TODO: vaihtoehtoinen kävely private Image[] pelaajanKavely = LoadImages("pingviinikavely.png", "pingviinikavely2", "pingviinikavely.png");
     private Image pelaajanKavely = LoadImage("pingviinikavely.png");
@@ -31,12 +36,12 @@ public class PingviiniPeli : PhysicsGame
     private Image kalaKuva = LoadImage("kala.png");              //TODO: muokkaa kuvaa
     private Image merileopardiKuva = LoadImage("merileopardi.png");
     
-    private Image taustakuva = LoadImage("tausta.png");         //TODO: muokkaa kuvaa
-    private Image tasonKuva = LoadImage("lumitekstuuri.png");
-    private Image vedenKuva = LoadImage("vesitekstuuri.png");
+    private Image taustakuva = LoadImage("tausta.png");         
+    private Image tasonKuva = LoadImage("lumitekstuuri.png");       //TODO: muokaa paremmin erottuvammaksi vedestä+taustasta    
+    private Image vedenKuva = LoadImage("vesitekstuuri.png");       //TODO: muokaa veden pintaa Gimpissä
 
 
-    private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: muuta äänitehoste
+    private SoundEffect kalaAani = LoadSoundEffect("maali.wav"); //TODO: muuta äänitehoste tai sitten sama kuin maaliin pääsyssä
     //TODO: private SoundEffect merileopardiAani = LoadSoundEffect("merileopardi.wav")
     //TODO: private SoundEffect maaliAani = LoadSoundEffect("maali.wav")
 
@@ -48,12 +53,12 @@ public class PingviiniPeli : PhysicsGame
     /// </summary>
     public override void Begin()
     {
-        Gravity = new Vector(0, -1000);
+        Gravity = new Vector(0, -1200);
 
         LuoKentta();
         LisaaNappaimet();
 
-        Camera.Follow(pelaaja1);
+        Camera.Follow(pelaaja);
         Camera.ZoomFactor = 1.2;
         Camera.StayInLevel = true;
     }
@@ -79,6 +84,7 @@ public class PingviiniPeli : PhysicsGame
         //TODO: POISTA Level.Background.CreateGradient(Color.White, Color.SkyBlue);
         Level.Background.Image = taustakuva;
         Level.Background.FitToLevel();
+        LisaaLaskuri();
     }
 
 
@@ -92,7 +98,6 @@ public class PingviiniPeli : PhysicsGame
     {
         PhysicsObject taso = PhysicsObject.CreateStaticObject(leveys, korkeus);
         taso.Position = paikka;
-        // TODO: poista taso.Color = Color.White;
         taso.Image = tasonKuva;
         Add(taso);
     }
@@ -106,10 +111,9 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="korkeus">Vesipalikan korkeus</param>
     public void LisaaVesi(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
         vesi.Position = paikka;
         vesi.Image = vedenKuva;
-       //TODO: poista vesi.Color = Color.BlueGray;
         vesi.IgnoresCollisionResponse = true;
         vesi.Tag = "vesi";
         Add(vesi);
@@ -123,7 +127,7 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="korkeus">Maalin korkeus</param>
     public void LisaaMaali(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
         maali.Position = paikka;
         maali.Color = Color.Red; //TODO: muuta kuvaksi
         maali.IgnoresCollisionResponse = true;
@@ -131,7 +135,14 @@ public class PingviiniPeli : PhysicsGame
         Add(maali);
     }
     
-    //TODO: LisaaLaskuri INTMETER, mallia Pong-pelistä
+
+    /// <summary>
+    /// Pistelaskurin sijainnin määrittely pelaajalle.
+    /// </summary>
+    public void LisaaLaskuri()
+    {
+        pelaajanPisteet = LuoPistelaskuri(Screen.Right - 50.0, Screen.Top - 50.0);
+    }
 
 
     /// <summary>
@@ -142,7 +153,7 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="korkeus">Kalan korkeus</param>
     public void LisaaKala(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject kala = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        kala = PhysicsObject.CreateStaticObject(leveys, korkeus);
         kala.IgnoresCollisionResponse = true;
         kala.Position = paikka;
         kala.Image = kalaKuva;
@@ -177,7 +188,7 @@ public class PingviiniPeli : PhysicsGame
 
     public void MerileopardiLiiku()
     { 
-        Vector liike = new Vector(1000, 0);             //TODO: hihasta vedetty
+        Vector liike = new Vector(500, 0);             //TODO: hihasta vedetty
         merileopardi.Hit(liike);
         // vaihtoehtoisesti merileopardi.Move(liike); tai .MoveTo
       
@@ -193,20 +204,20 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="korkeus">Pelaajan hahmon korkeus</param>
     public void LisaaPelaaja(Vector paikka, double leveys, double korkeus)
     {
-        pelaaja1 = new PlatformCharacter(leveys, korkeus);
-        pelaaja1.Position = paikka;
-        pelaaja1.Mass = 4.0;
-        pelaaja1.AnimWalk = new Animation(pelaajanKavely);      
-        pelaaja1.AnimIdle = new Animation(pelaajanKuva);
-        pelaaja1.AnimJump = new Animation(pelaajaHyppy);
-        pelaaja1.AnimFall = new Animation(pelaajaPutoaa);
+        pelaaja = new PlatformCharacter(leveys, korkeus);
+        pelaaja.Position = paikka;
+        pelaaja.Mass = 4.0;
+        pelaaja.AnimWalk = new Animation(pelaajanKavely);      
+        pelaaja.AnimIdle = new Animation(pelaajanKuva);
+        pelaaja.AnimJump = new Animation(pelaajaHyppy);
+        pelaaja.AnimFall = new Animation(pelaajaPutoaa);
 
 
-        AddCollisionHandler(pelaaja1, "kala", TormaaKalaan);
-        AddCollisionHandler(pelaaja1, "merileopardi", TormaaMerileopardiin);   
-        AddCollisionHandler(pelaaja1, "vesi", TormaaVeteen);
-        AddCollisionHandler(pelaaja1, "maali", TormaaMaaliin);
-        Add(pelaaja1);
+        AddCollisionHandler(pelaaja, "kala", TormaaKalaan);
+        AddCollisionHandler(pelaaja, "merileopardi", KasittelePelaajanTormays);   
+        AddCollisionHandler(pelaaja, "vesi", KasittelePelaajanTormays);
+        AddCollisionHandler(pelaaja, "maali", KasittelePelaajanTormays);
+        Add(pelaaja);
     }
 
 
@@ -218,7 +229,6 @@ public class PingviiniPeli : PhysicsGame
     public void Liikuta(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Walk(nopeus);
-        
     }
 
 
@@ -230,7 +240,6 @@ public class PingviiniPeli : PhysicsGame
     public void Hyppaa(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Jump(nopeus);
-     
     }
 
 
@@ -239,54 +248,72 @@ public class PingviiniPeli : PhysicsGame
     /// </summary>
     /// <param name="hahmo">pelaajan hahmo</param>
     /// <param name="kala">pelissä kerättävät esineet</param>
-    public void TormaaKalaan(PhysicsObject hahmo, PhysicsObject kala)
+    public void TormaaKalaan(PhysicsObject hahmo, PhysicsObject kala)       //TODO: miten saa lisättyä KasittelePelaajanTormays aliohjelmaan, 
+                                                                            //niin että kaikki kalat lasketaan
     {
         kalaAani.Play();
         MessageDisplay.Add("Keräsit kalan!"); //TODO: POISTA?
+        pelaajanPisteet.Value += 1;
         kala.Destroy();
     }
 
 
     /// <summary>
+    /// Kun pelaajaa törmää maaliin peli/taso loppuu ja kuuluu ääni.
     /// Kun pelaajaa törmää merileopardiin pelaajan hahmo tuhoutuu ja kuuluu ääni.
-    /// </summary>
-    /// <param name="hahmo"></param>
-    /// <param name="merileopardi"></param>
-    public void TormaaMerileopardiin(PhysicsObject hahmo, PhysicsObject merileopardi)
-    {
-        //TODO: lisää äänitehosteet
-        MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
-        pelaaja1.Destroy();
-        //TODO: pelille loppupiste
-    }
-
-
-    /// <summary>
     /// Kun pelaajaa törmää veteen pelaajan hahmo tuhoutuu ja kuuluu ääni.
     /// </summary>
-    /// <param name="hahmo">Pelaajan hahmo</param>
-    /// <param name="vesi">Vesi</param>
-    public void TormaaVeteen (PhysicsObject hahmo, PhysicsObject vesi)
+    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="kohde">kohde, johon pelaaja törmää</param>
+    public void KasittelePelaajanTormays(PhysicsObject hahmo, PhysicsObject kohde)
     {
+
+        if (kohde == maali)
+        {
+            MessageDisplay.Add("Onneksi olkoon! Pääsit turvallisesti kotiin");
+        }
+
+        else if (kohde == merileopardi)
+        {
+            MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
+            pelaaja.Destroy();
+        }
+
+        else if (kohde == vesi)
+        {
+            MessageDisplay.Add("Voi ei, törmäsit veteenja jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
+            pelaaja.Destroy();
+        }
+
+        //TODO: Törmäys animaatio veteen
+        
         //TODO: lisää äänitehosteet
-        MessageDisplay.Add("Voi ei, putosit veteen ja jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
-        pelaaja1.Destroy();
-        //TODO: pelille loppupiste
+      
+        
+        //TODO: pelille loppupiste ja sopivat valikot
     }
+
 
 
     /// <summary>
-    /// Kun pelaajaa törmää maaliin kenttä loppuu ja kuuluu ääni.
+    /// Laskuri pelaajan kaloista keräämien pisteiden laskemiseen
     /// </summary>
-    /// <param name="hahmo">Pelaajan hahmo</param>
-    /// <param name="maali">Tason loppu</param>
-    public void TormaaMaaliin (PhysicsObject hahmo, PhysicsObject maali)
+    /// <param name="x">Laskurinäytön keskipisteen X koordinaatti</param>
+    /// <param name="y">Laskurinäytön keskipisteen y koordinaatti</param>
+    /// <returns></returns>
+    public IntMeter LuoPistelaskuri(double x, double y)
     {
-        MessageDisplay.Add("Onneksi olkoon! Pääsit turvallisesti kotiin");
-        //TODO: lopetusvalikko, pelin lopetus / tason vaihto
-        //TODO: Lisää äänitehosteet
-    }
+        IntMeter laskuri = new IntMeter(0);
+  
+        Label naytto = new Label();
+        naytto.BindTo(laskuri);
+        naytto.X = x;
+        naytto.Y = y;
+        naytto.TextColor = Color.Black;
+        Add(naytto);
 
+        return laskuri;
+    }
 
 
     /// <summary>
@@ -297,15 +324,15 @@ public class PingviiniPeli : PhysicsGame
         Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
 
-        Keyboard.Listen(Key.Left, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja1, -NOPEUS);
-        Keyboard.Listen(Key.Right, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja1, NOPEUS);
-        Keyboard.Listen(Key.Up, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja1, HYPPYNOPEUS);
+        Keyboard.Listen(Key.Left, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, -NOPEUS);
+        Keyboard.Listen(Key.Right, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, NOPEUS);
+        Keyboard.Listen(Key.Up, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja, HYPPYNOPEUS);
 
         ControllerOne.Listen(Button.Back, ButtonState.Pressed, Exit, "Poistu pelistä"); 
 
-        ControllerOne.Listen(Button.DPadLeft, ButtonState.Down, Liikuta, "Pelaaja liikkuu vasemmalle", pelaaja1, -NOPEUS);
-        ControllerOne.Listen(Button.DPadRight, ButtonState.Down, Liikuta, "Pelaaja liikkuu oikealle", pelaaja1, NOPEUS);
-        ControllerOne.Listen(Button.A, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja1, HYPPYNOPEUS);
+        ControllerOne.Listen(Button.DPadLeft, ButtonState.Down, Liikuta, "Pelaaja liikkuu vasemmalle", pelaaja, -NOPEUS);
+        ControllerOne.Listen(Button.DPadRight, ButtonState.Down, Liikuta, "Pelaaja liikkuu oikealle", pelaaja, NOPEUS);
+        ControllerOne.Listen(Button.A, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja, HYPPYNOPEUS);
 
         PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
     }
