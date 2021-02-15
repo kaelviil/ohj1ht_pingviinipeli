@@ -23,9 +23,11 @@ public class PingviiniPeli : PhysicsGame
     private PlatformCharacter pelaaja1;
     private PhysicsObject merileopardi;
 
+    //TODO: vaihtoehtoinen kävely private Image[] pelaajanKavely = LoadImages("pingviinikavely.png", "pingviinikavely2", "pingviinikavely.png");
     private Image pelaajanKavely = LoadImage("pingviinikavely.png");
     private Image pelaajanKuva = LoadImage("pingviini.png");
     private Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
+    private Image pelaajaPutoaa = LoadImage("pingviiniputoaa.png");
     private Image kalaKuva = LoadImage("kala.png");              //TODO: muokkaa kuvaa
     private Image merileopardiKuva = LoadImage("merileopardi.png");
     private Image taustakuva = LoadImage("tausta.png");          //TODO: muokkaa kuvaa
@@ -56,7 +58,8 @@ public class PingviiniPeli : PhysicsGame
 
     /// <summary>
     /// Aliohjelmassa luodaan kenttä käyttäen erillistä tekstitiedostoa.
-    /// Ks. Content kansiosta. # lisää tason, V lisää vettä, * lisää kalan, P lisää pelaajan 
+    /// Ks. Content kansiosta kentta1.txt
+    /// # lisää tason, V lisää vettä, * lisää kalan, P lisää pelaajan 
     /// ja M lisää merileopardin. 
     /// </summary>
     public void LuoKentta()
@@ -67,6 +70,7 @@ public class PingviiniPeli : PhysicsGame
         kentta.SetTileMethod('*', LisaaKala);
         kentta.SetTileMethod('P', LisaaPelaaja);
         kentta.SetTileMethod('M', LisaaMerileopardi);
+        kentta.SetTileMethod('§', LisaaMaali);
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
         Level.CreateBorders();
         //TODO: POISTA Level.Background.CreateGradient(Color.White, Color.SkyBlue);
@@ -101,14 +105,21 @@ public class PingviiniPeli : PhysicsGame
     {
         PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
         vesi.Position = paikka;
-        vesi.Color = Color.Blue;
+        vesi.Color = Color.BlueGray; //TODO: Muuta tekstuuriksi
         vesi.IgnoresCollisionResponse = true;
         vesi.Tag = "vesi";
-        //TODO:Lisää tekstuuri
         Add(vesi);
     }
 
-
+    public void LisaaMaali(Vector paikka, double leveys, double korkeus)
+    {
+        PhysicsObject maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        maali.Position = paikka;
+        maali.Color = Color.Red; //TODO: muuta kuvaksi
+        maali.IgnoresCollisionResponse = true;
+        maali.Tag = "maali";
+        Add(maali);
+    }
     //TODO: LisaaMaali
     //TODO: LisaaLaskuri INTMETER, mallia Pong-pelistä
 
@@ -144,7 +155,7 @@ public class PingviiniPeli : PhysicsGame
         merileopardi.Image = merileopardiKuva;
         merileopardi.Tag = "merileopardi";
         MerileopardiLiiku();
-        merileopardi.Mass = 1.0;
+        merileopardi.Mass = 10.0;
 
 
         Add(merileopardi);
@@ -153,25 +164,15 @@ public class PingviiniPeli : PhysicsGame
         // erillinen aliohjelmansa? liikkuu edestakaisin tiettyä väliä 
         // esim paikka -100 kääntyy takaisin ja liikkuu kunnes paikka + 100?
         
-
-
-
-
-
     }
 
 
     public void MerileopardiLiiku()
-    {
-
-
-        Vector liike = new Vector (1000,0)
+    { 
+        Vector liike = new Vector(1000, 0);             //TODO: hihasta vedetty
         merileopardi.Hit(liike);
         // vaihtoehtoisesti merileopardi.Move(liike); tai .MoveTo
-        //merileopardi.StopVertical();
-        //merileopardi.StopAngular();
-
-
+      
     }
 
 
@@ -190,12 +191,13 @@ public class PingviiniPeli : PhysicsGame
         pelaaja1.AnimWalk = new Animation(pelaajanKavely);      
         pelaaja1.AnimIdle = new Animation(pelaajanKuva);
         pelaaja1.AnimJump = new Animation(pelaajaHyppy);
-        //TODO: pelaaja1.AnimFall = new Animation();
+        pelaaja1.AnimFall = new Animation(pelaajaPutoaa);
 
 
         AddCollisionHandler(pelaaja1, "kala", TormaaKalaan);
         AddCollisionHandler(pelaaja1, "merileopardi", TormaaMerileopardiin);   //TODO: Pystyykö vettä ja merileopardeja yhdistämään samaan törmäykseen?
         AddCollisionHandler(pelaaja1, "vesi", TormaaVeteen);
+        AddCollisionHandler(pelaaja1, "maali", TormaaMaaliin);
         Add(pelaaja1);
     }
 
@@ -208,7 +210,6 @@ public class PingviiniPeli : PhysicsGame
     public void Liikuta(PlatformCharacter hahmo, double nopeus)
     {
         hahmo.Walk(nopeus);
-        
         
     }
 
@@ -263,6 +264,19 @@ public class PingviiniPeli : PhysicsGame
         MessageDisplay.Add("Voi ei, putosit veteen ja jouduit merileopardin kitaan"); //TODO: Poista? Muuta valikoksi?
         pelaaja1.Destroy();
         //TODO: pelille loppupiste
+    }
+
+
+    /// <summary>
+    /// Kun pelaajaa törmää maaliin kenttä loppuu ja kuuluu ääni.
+    /// </summary>
+    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="maali">Tason loppu</param>
+    public void TormaaMaaliin (PhysicsObject hahmo, PhysicsObject maali)
+    {
+        MessageDisplay.Add("Onneksi olkoon! Pääsit turvallisesti kotiin");
+        //TODO: lopetusvalikko
+        //TODO: Lisää äänitehosteet
     }
 
 
