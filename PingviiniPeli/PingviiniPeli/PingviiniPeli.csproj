@@ -31,6 +31,9 @@
         <None Update="Content\merileopardi.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Content\merileopardi.wav">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="Content\norsu.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
