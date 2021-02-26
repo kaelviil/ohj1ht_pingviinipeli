@@ -13,6 +13,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="Content\aanet.wav">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="Content\kala.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
