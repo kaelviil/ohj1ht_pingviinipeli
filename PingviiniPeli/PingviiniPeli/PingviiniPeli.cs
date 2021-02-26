@@ -226,8 +226,8 @@ public class PingviiniPeli : PhysicsGame
 
 
         AddCollisionHandler(pelaaja, "kala", TormaaKalaan);
-        AddCollisionHandler(pelaaja, "merileopardi", TormaaMerileopardiinTaiVeteen);   
-        AddCollisionHandler(pelaaja, "vesi", TormaaMerileopardiinTaiVeteen);
+        AddCollisionHandler(pelaaja, "merileopardi", TormaaVeteen);   
+        AddCollisionHandler(pelaaja, "vesi", TormaaVeteen);
         AddCollisionHandler(pelaaja, "maali", TormaaMaaliin);
         Add(pelaaja);
     }
@@ -237,8 +237,7 @@ public class PingviiniPeli : PhysicsGame
     /// Määritellään pelaajan liike.
     /// </summary>
     /// <param name="hahmo">Pelaajan hahmo</param>
-    /// <param name="nopeus">Hahmon nopeus liikuttaessa</param>
-         
+    /// <param name="nopeus">Hahmon nopeus liikuttaessa</param> 
     // Lähde: Jypelin tasohyppelypelin pohja.
     public void Liikuta(PlatformCharacter hahmo, double nopeus)
     {
@@ -251,7 +250,6 @@ public class PingviiniPeli : PhysicsGame
     /// </summary>
     /// <param name="hahmo">Pelaajan hahmo</param>
     /// <param name="nopeus">Hahmon nopeus hypättäessä</param> 
-
     //Lähde: Jypelin tasohyppelypelin pohja.
     public void Hyppaa(PlatformCharacter hahmo, double nopeus)
     {
@@ -259,7 +257,11 @@ public class PingviiniPeli : PhysicsGame
         
     }
 
-
+    /// <summary>
+    /// Pelaajan törmätessä maaliin peli loppuu.
+    /// </summary>
+    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="kohde">merileopardi</param>
     public void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)                
     {
         MessageDisplay.Add("Onneksi olkoon! Pääsit turvallisesti kotiin"); //TODO: käyttöliittymä
@@ -269,31 +271,29 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Kun pelaajaa törmää maaliin peli/taso loppuu ja kuuluu ääni.
-    /// Kun pelaajaa törmää merileopardiin pelaajan hahmo tuhoutuu ja kuuluu ääni.
-    /// Kun pelaajaa törmää veteen pelaajan hahmo tuhoutuu ja kuuluu ääni.
+    /// Pelaajaa törmätessä veteen pelaajan hahmo tuhoutuu ja kuuluu ääni.
     /// </summary>
     /// <param name="hahmo">pelaajan hahmo</param>
-    /// <param name="kohde">kohde, johon pelaaja törmää</param>
+    /// <param name="kohde">merileopardi</param>
 
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2021). Koodia muokattu
-    public void TormaaMerileopardiinTaiVeteen(PhysicsObject hahmo, PhysicsObject kohde)                  //TODO:parempi nimi törmäykseen?
+    public void TormaaVeteen(PhysicsObject hahmo, PhysicsObject kohde)                  //TODO:parempi nimi törmäykseen?
     {
-
-        if (kohde == merileopardi)
-        {
-            merileopardiAani.Play();
-            MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan"); //TODO: Muuta valikoksi
-            pelaaja.Destroy();
-        }
-
-        else if (kohde == vesi)
-        {
             merileopardiAani.Play();
             MessageDisplay.Add("Voi ei, törmäsit veteen ja jouduit merileopardin kitaan"); //TODO: Muuta valikoksi
             pelaaja.Destroy();
-        }
+    }
 
+    /// <summary>
+    /// Pelaajaa törmätessä merileopardiin pelaajan hahmo tuhoutuu ja kuuluu ääni.
+    /// </summary>
+    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="kohde">kohde, johon pelaaja törmää</param>
+    public void TormaaMerileopardiin(PhysicsObject hahmo, PhysicsObject kohde)              //TODO: yhdistä törmäyksenkäsittelijöitä? lähestulkoon kuin sama kuin edellinen
+    {
+        merileopardiAani.Play();
+        MessageDisplay.Add("Voi ei, jouduit merileopardin kitaan"); //TODO: Muuta valikoksi
+        pelaaja.Destroy();
     }
 
 
