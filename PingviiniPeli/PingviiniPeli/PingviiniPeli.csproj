@@ -28,6 +28,9 @@
         <None Update="Content\lumitekstuuri2.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Content\maali.png">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="Content\maali.wav">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

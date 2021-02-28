@@ -77,14 +77,13 @@ public class PingviiniPeli : PhysicsGame
         kentta.SetTileMethod('V', LisaaVesi);
         kentta.SetTileMethod('*', LisaaKala);
         kentta.SetTileMethod('P', LisaaPelaaja);
-        kentta.SetTileMethod('M', LisaaMerileopardi, 4);                   //TODO: anna parametreina miten paljon liikkuu, useampi erilainen  LisaaMerileopardi
-        kentta.SetTileMethod('m', LisaaMerileopardi, 2);
+        kentta.SetTileMethod('M', LisaaMerileopardi);                   
+        kentta.SetTileMethod('m', LisaaMerileopardi);
         kentta.SetTileMethod('§', LisaaMaali);
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
         Level.CreateBorders();
         Level.Background.Image = LoadImage("tausta.png");
         Level.Background.FitToLevel();
-        //TODO: POISTA Level.Background.CreateGradient(Color.White, Color.SkyBlue);
 
         Gravity = new Vector(0, -1200);
 
@@ -138,6 +137,7 @@ public class PingviiniPeli : PhysicsGame
     {
         maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
         maali.Position = paikka;
+        //maali.Image = LoadImage("maali.png");
         maali.Color = Color.Red; //TODO: muuta kuvaksi
         maali.IgnoresCollisionResponse = true;
         maali.Tag = "maali";
@@ -158,7 +158,7 @@ public class PingviiniPeli : PhysicsGame
         kala = PhysicsObject.CreateStaticObject(leveys, korkeus);
         kala.IgnoresCollisionResponse = true;
         kala.Position = paikka;
-        kala.Image = LoadImage("kala.png");         //TODO: Muokaa kuvaa GIMPissä, joku kummalllinen virhe näkyy  
+        kala.Image = LoadImage("kala.png");
         kala.Tag = "kala";
         Add(kala);
     }
@@ -170,9 +170,8 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="paikka">Paikka, johon merileopardit luodaan</param>
     /// <param name="leveys">Merileopardin leveys</param>
     /// <param name="korkeus">Merileopardin korkeus</param>
-    /// <param name="liikemaara">Ruutujen määrä, jonka merileopardi liikkuu</param>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Aivot (viitattu 28.2.2021)
-    public void LisaaMerileopardi(Vector paikka, double leveys, double korkeus, int liikemaara)
+    public void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
     {
         merileopardi = new PlatformCharacter (1.25* leveys, 1.25*korkeus);
         merileopardi.Position = paikka;
@@ -246,7 +245,6 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="kohde">merileopardi</param>
     public void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)                
     {
-        //TODO: Poista MessageDisplay.Add("Onneksi olkoon! Pääsit turvallisesti kotiin");
         LopetusvalikkoMaali();
         //TODO: parhaatPisteet.HighScoreWindow.Closed += LopetuvalikkoMaali;
     }
@@ -262,7 +260,6 @@ public class PingviiniPeli : PhysicsGame
     public void TormaaVeteenTaiLeopardiin(PhysicsObject hahmo, PhysicsObject kohde)                  //TODO:parempi nimi törmäykseen?
     {
         merileopardiAani.Play();
-        //TODO: poista MessageDisplay.Add("Voi ei, törmäsit veteen ja jouduit merileopardin kitaan"); 
         pelaaja.Destroy();
         LopetusvalikkoTuhoutuessa();
     }
@@ -377,8 +374,9 @@ public class PingviiniPeli : PhysicsGame
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
     public void ParhaatPisteet()
-    {  
+    {
         //TODO: HighScoreWindow pisteIkkuna = new HighScoreWindow("Parhaat psiteet", "Onneksi olkoon, pääsit listalle pisteillä %p! Syötä nimesi:", parhaatPisteet, pisteet.xml);
+
     }
 
 
