@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 
 ///@author Katri Viiliäinen
-///@version 26.2.2021
+///@version 12.3.2021
 ///
 /// 
 /// <summary>
@@ -20,31 +20,32 @@ using System.Collections.Generic;
 // Pong-pelin koodiin (ks. https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe1 viitattu 17.2.2021)
 // sekä Jypelin käyttöohjeisiin (ks. https://trac.cc.jyu.fi/projects/npo/wiki/KirjastonOhjeet viitattu 17.2.2021).
 
-//TODO: tarkenna kurssin aikana tehtyjä koodeja oikeisiin kansioihinsa (Erityisesti pelottava peli -> tekoäly vihollisen liikkeisiin)
+//TODO: tarkenna kurssin aikana tehtyjä koodeja oikeisiin kansioihinsa
 public class PingviiniPeli : PhysicsGame
-{
+{   
     private const double NOPEUS = 200;
     private const double HYPPYNOPEUS = 750;
     private const int RUUDUN_KOKO = 30;
 
-    private PlatformCharacter pelaaja;             //TODO: kannattaako muutta omaksi luokakseen?
-    //TODO: vaihtoehtoinen kävely private Image[] pelaajanKavely = LoadImages("pingviinikavely.png", "pingviinikavely2", "pingviinikavely.png");
-    private Image pelaajanKavely = LoadImage("pingviinikavely.png");
-    private Image pelaajanKuva = LoadImage("pingviini.png");
-    private Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
-    private Image pelaajaPutoaa = LoadImage("pingviiniputoaa.png");
-
-    private PlatformCharacter merileopardi;       //TODO: kannattaako muutta omaksi luokakseen?
-    private PhysicsObject kala;
-    private PhysicsObject vesi;
-    private PhysicsObject maali;
+    int kenttaNro = 1;
 
     private IntMeter pelaajanPisteet;
-             
-    //TODO: tee loput äänitehosteet ja siirrä sopiviin aliohjelmiin
-    private SoundEffect kalaAani = LoadSoundEffect("maali.wav");    //TODO: muuta äänitehoste tai sitten sama kuin maaliin pääsyssä
-    private SoundEffect merileopardiAani = LoadSoundEffect("aanet.wav");  //TODO: nimeä tiedosto paremmin
-                                                                        
+
+    private readonly Image taustakuva = LoadImage("tausta.png");             
+    private readonly Image pelaajanKavely = LoadImage("pingviinikavely.png");           //TODO: vaihtoehtoinen kävely private Image[] pelaajanKavely = LoadImages("pingviinikavely.png", "pingviinikavely2", "pingviinikavely.png");
+    private readonly Image pelaajanKuva = LoadImage("pingviini.png");
+    private readonly Image pelaajaHyppy = LoadImage("pingviinihyppy.png");
+    private readonly Image pelaajaPutoaa = LoadImage("pingviiniputoaa.png");
+    private readonly Image kalaKuva = LoadImage("kala.png");
+    private readonly Image maalinKuva = LoadImage("maali.png");
+    private readonly Image merileopardiKuva = LoadImage("merileopardi.png");
+    private readonly Image vesiMerileopardilla = LoadImage("vesitekstuuri");            //TODO: tarkista vesitekstuurien koot ja nimeä selkeämmin
+    private readonly Image vesiKuva = LoadImage("vesitekstuuri2.png");
+    private readonly Image lumiKuva = LoadImage("lumitekstuuri.png");     
+
+    private readonly SoundEffect kalaAani = LoadSoundEffect("maali.wav");    //TODO: muuta äänitehoste tai sitten sama kuin maaliin pääsyssä
+    private readonly SoundEffect merileopardiAani = LoadSoundEffect("aanet.wav");  //TODO: nimeä tiedosto paremmin
+        
 
     /// <summary>
     /// Luodaan alkuvalikko, kenttä ja kutsutaan pelaajan ohjaimia ja pistelaskuria aliohjelmasta.
@@ -53,44 +54,52 @@ public class PingviiniPeli : PhysicsGame
     public override void Begin()
     {
         LuoAlkuvalikko();
-        LuoKentta();
-        LisaaLaskuri();
-        LisaaNappaimet();
-
-        IsPaused = true;
-        Pause();
+        VaihdaTasoa();
     }
 
+    private void VaihdaTasoa()
+    {
+        ClearAll();
+
+        if (kenttaNro == 1) LuoKentta("kentta1");
+        else if (kenttaNro == 2) LuoKentta("kentta2");
+        else if (kenttaNro == 3) LuoKentta("kentta3"); ///TODO: lopetusvalikko + tulokset
+        else if (kenttaNro > 3) Exit();  //TODO: ---> tulos ruuduksi
+
+        LisaaLaskuri();
+        IsPaused = true;
+        Pause();
+
+    }
 
     /// <summary>
     /// Kenttä luodaan käyttäen erillistä tekstitiedostoa.
-    /// Ks. Content kansiosta kentta1.txt
-    /// # lisää tason, V lisää vettä, * lisää kalan, P lisää pelaajan, 
-    /// M lisää merileopardin ja § maalin. 
-    /// Kamera on määritelty seuraamaan pelaajan hahmoa.
+    /// Ks. Content kansiosta kentta1, kentta2 ja kentta3
+    /// # lisää tason, V ja v lisää veden eritekstuureilla, * lisää kalan, P lisää pelaajan, 
+    /// M lisää merileopardin ja L maalin. 
     /// </summary>
     // Lähde: Jypelin tasohyppelypelin pohja. 
-    public void LuoKentta()
+    private void LuoKentta(string tasonTiedosto)
     {
-        TileMap kentta = TileMap.FromLevelAsset("kentta1.txt"); //TODO: muuta kenttää
+        TileMap kentta = TileMap.FromLevelAsset(tasonTiedosto); //TODO: muuta kenttää ja lisää toinen ja kolmas
         kentta.SetTileMethod('#', LisaaTaso);
-        kentta.SetTileMethod('V', LisaaVesi);
-        kentta.SetTileMethod('*', LisaaKala);
+        kentta.SetTileMethod('V', LisaaVesi, "vesitekstuuri");
+        kentta.SetTileMethod('v', LisaaVesi, "vesitekstuuri2");
+        kentta.SetTileMethod('*', LisaaObjekti, "kala", "kala.png");
         kentta.SetTileMethod('P', LisaaPelaaja);
         kentta.SetTileMethod('M', LisaaMerileopardi);                   
         kentta.SetTileMethod('m', LisaaMerileopardi);
-        kentta.SetTileMethod('§', LisaaMaali);
+        kentta.SetTileMethod('L', LisaaObjekti, "maali", "maali.png");
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
         Level.CreateBorders();
-        Level.Background.Image = LoadImage("tausta.png");
+        Level.Background.Image = taustakuva;
         Level.Background.FitToLevel();
 
         Gravity = new Vector(0, -1200);
 
-        Camera.Follow(pelaaja);
+        //Camera.Follow(pelaaja);  -> LuoPelaaja aliohjelmassa
         Camera.ZoomFactor = 1.2;
         Camera.StayInLevel = true;
-      
     }
 
 
@@ -101,11 +110,11 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="leveys">Tason leveys</param>
     /// <param name="korkeus"> Tason korkeus</param>
     //Lähde: Jypelin tasohyppelypelin pohja. Koodia muokattu.
-    public void LisaaTaso(Vector paikka, double leveys, double korkeus)
+    private void LisaaTaso(Vector paikka, double leveys, double korkeus)
     {
         PhysicsObject taso = PhysicsObject.CreateStaticObject(leveys, korkeus);
         taso.Position = paikka;
-        taso.Image = LoadImage("lumitekstuuri.png");
+        taso.Image = lumiKuva;
         Add(taso);
     }
 
@@ -116,11 +125,11 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="paikka">Paikka, johon vesipalikat luodaan</param>
     /// <param name="leveys">Vesipalikan leveys</param>
     /// <param name="korkeus">Vesipalikan korkeus</param>
-    public void LisaaVesi(Vector paikka, double leveys, double korkeus)
+    private void LisaaVesi(Vector paikka, double leveys, double korkeus, string kuvanNimi)
     {
-        vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
         vesi.Position = paikka;
-        vesi.Image = LoadImage("vesitekstuuri2.png");                                 //parametrisoi, niin että voi antaa toisenkin tekstuurin,  jossa merileopardi
+        vesi.Image = LoadImage (kuvanNimi);                                 
         vesi.IgnoresCollisionResponse = true;
         vesi.Tag = "vesi";
         Add(vesi);
@@ -133,34 +142,14 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="paikka">Paikka, johon maali luodaan</param>
     /// <param name="leveys">Maalin leveys</param>
     /// <param name="korkeus">Maalin korkeus</param>
-    public void LisaaMaali(Vector paikka, double leveys, double korkeus)
+    private void LisaaObjekti(Vector paikka, double leveys, double korkeus, string tagi, string kuvanNimi)
     {
-        maali = PhysicsObject.CreateStaticObject(leveys, korkeus);
-        maali.Position = paikka;
-        //maali.Image = LoadImage("maali.png");
-        maali.Color = Color.Red; //TODO: muuta kuvaksi
-        maali.IgnoresCollisionResponse = true;
-        maali.Tag = "maali";
-        Add(maali);
-    }
-
-
-    /// <summary>
-    /// Aliohjelma kalojen luomiseksi.
-    /// </summary>
-    /// <param name="paikka">Paikka, johon kalat luodaan</param>
-    /// <param name="leveys">Kalan leveys</param>
-    /// <param name="korkeus">Kalan korkeus</param>
-   
-    //Lähde: Jypelin tasohyppelypelin pohja. Koodia muokattu.
-    public void LisaaKala(Vector paikka, double leveys, double korkeus)
-    {
-        kala = PhysicsObject.CreateStaticObject(leveys, korkeus);
-        kala.IgnoresCollisionResponse = true;
-        kala.Position = paikka;
-        kala.Image = LoadImage("kala.png");
-        kala.Tag = "kala";
-        Add(kala);
+        PhysicsObject objekti = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        objekti.Position = paikka;
+        objekti.Image = LoadImage(kuvanNimi);
+        objekti.IgnoresCollisionResponse = true;
+        objekti.Tag = tagi;
+        Add(objekti);
     }
 
 
@@ -171,13 +160,14 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="leveys">Merileopardin leveys</param>
     /// <param name="korkeus">Merileopardin korkeus</param>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Aivot (viitattu 28.2.2021)
-    public void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
+    private void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
     {
-        merileopardi = new PlatformCharacter (1.25* leveys, 1.25*korkeus);
+        PlatformCharacter merileopardi = new PlatformCharacter (1.25* leveys, 1.25*korkeus);
         merileopardi.Position = paikka;
-        merileopardi.Image = LoadImage("merileopardi.png");
-        merileopardi.Tag = "merileopardi";
         merileopardi.Mass = 10.0;
+        merileopardi.Image = merileopardiKuva;
+        merileopardi.Tag = "merileopardi";
+
         Add(merileopardi);
 
         PlatformWandererBrain liike = new PlatformWandererBrain();
@@ -187,24 +177,34 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Aliohjelmassa määritellään pelaajan hahmon ominaisuuksia: massa, animaatiot ja 
+    /// Aliohjelmassa määritellään pelaajan hahmon ominaisuuksia: massa, animaatiot, näppäimet sekä
     /// mitä pelaajalle tapahtuu muihin olioihin törmätessä.
     /// </summary>
     /// <param name="paikka">Paikka, johon pelaaja luodaan</param>
     /// <param name="leveys">Pelaajan hahmon leveys</param>
     /// <param name="korkeus">Pelaajan hahmon korkeus</param>
-         
+
     //Lähde: Jypelin tasohyppelypelin pohja.
-    public void LisaaPelaaja(Vector paikka, double leveys, double korkeus)
+    private void LisaaPelaaja(Vector paikka, double leveys, double korkeus)
     {
-        pelaaja = new PlatformCharacter(leveys, korkeus);
+        PlatformCharacter pelaaja = new PlatformCharacter(leveys, korkeus);
         pelaaja.Position = paikka;
         pelaaja.Mass = 4.0;
         pelaaja.AnimWalk = new Animation(pelaajanKavely);      
         pelaaja.AnimIdle = new Animation(pelaajanKuva);
         pelaaja.AnimJump = new Animation(pelaajaHyppy);
         pelaaja.AnimFall = new Animation(pelaajaPutoaa);
+        pelaaja.Tag = "pelaaja";
 
+        Camera.Follow(pelaaja);
+
+        Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
+        Keyboard.Listen(Key.Q, ButtonState.Pressed, Pause, "Pysäyttää pelin. Paina uudelleen jatkaaksesi peliä");
+        Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
+        Keyboard.Listen(Key.Left, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, -NOPEUS);
+        Keyboard.Listen(Key.Right, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, NOPEUS);
+        Keyboard.Listen(Key.Up, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja, HYPPYNOPEUS);
+        PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
 
         AddCollisionHandler(pelaaja, "kala", TormaaKalaan);
         AddCollisionHandler(pelaaja, "merileopardi", TormaaVeteenTaiLeopardiin);   
@@ -217,47 +217,35 @@ public class PingviiniPeli : PhysicsGame
     /// <summary>
     /// Määritellään pelaajan liike.
     /// </summary>
-    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="pelaaja">Pelaajan hahmo</param>
     /// <param name="nopeus">Hahmon nopeus liikuttaessa</param> 
     // Lähde: Jypelin tasohyppelypelin pohja.
-    public void Liikuta(PlatformCharacter hahmo, double nopeus)
+    private void Liikuta(PlatformCharacter pelaaja, double nopeus)
     {
-            hahmo.Walk(nopeus);  
+            pelaaja.Walk(nopeus);  
     }
 
 
     /// <summary>
     /// Määritellään pelaajan hyppy.
     /// </summary>
-    /// <param name="hahmo">Pelaajan hahmo</param>
+    /// <param name="pelaaja">Pelaajan hahmo</param>
     /// <param name="nopeus">Hahmon nopeus hypättäessä</param> 
     //Lähde: Jypelin tasohyppelypelin pohja.
-    public void Hyppaa(PlatformCharacter hahmo, double nopeus)
+    private void Hyppaa(PlatformCharacter pelaaja, double nopeus)
     {
-        hahmo.Jump(nopeus);
-        
-    }
-
-    /// <summary>
-    /// Pelaajan törmätessä maaliin peli loppuu.
-    /// </summary>
-    /// <param name="hahmo">pelaajan hahmo</param>
-    /// <param name="kohde">merileopardi</param>
-    public void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)                
-    {
-        LopetusvalikkoMaali();
-        //TODO: parhaatPisteet.HighScoreWindow.Closed += LopetuvalikkoMaali;
+        pelaaja.Jump(nopeus);
     }
 
 
     /// <summary>
     /// Pelaajaan törmätessä veteen ta merileopardiin pelaajan hahmo tuhoutuu ja kuuluu ääni.
     /// </summary>
-    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="pelaaja">pelaajan hahmo</param>
     /// <param name="kohde">kohde, johon pelaaja törmää</param>
 
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2021). Koodia muokattu
-    public void TormaaVeteenTaiLeopardiin(PhysicsObject hahmo, PhysicsObject kohde)                  //TODO:parempi nimi törmäykseen?
+    private void TormaaVeteenTaiLeopardiin(PhysicsObject pelaaja, PhysicsObject kohde)               
     {
         merileopardiAani.Play();
         pelaaja.Destroy();
@@ -268,10 +256,10 @@ public class PingviiniPeli : PhysicsGame
     /// <summary>
     /// Kun pelaaja törmää kalaan kala tuhoutuu ja kuuluu ääni.
     /// </summary>
-    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="pelaaja">pelaajan hahmo</param>
     /// <param name="kala">pelissä kerättävät esineet</param>
     //Lahde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2021) & Jypelin Tasohyppelypelin pohja.
-    public void TormaaKalaan(PhysicsObject hahmo, PhysicsObject kala)
+    private void TormaaKalaan(PhysicsObject pelaaja, PhysicsObject kala)
     {
         kalaAani.Play();                    //TODO: muokkaa ääntä
         pelaajanPisteet.Value += 1;
@@ -280,36 +268,41 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Pelaajan käyttämien näppäinten määrittely
-    /// </summary> 
-    //Lähde: Jypelin tasohyppelypelin pohja ja https://trac.cc.jyu.fi/projects/npo/wiki/Pause (viitattu 28.2.2021)
-
-    public void LisaaNappaimet()
+    /// Pelaajan törmätessä maaliin peli loppuu.
+    /// </summary>
+    /// <param name="hahmo">pelaajan hahmo</param>
+    /// <param name="kohde">merileopardi</param>
+    private void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)
     {
-        Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
-        Keyboard.Listen(Key.Q, ButtonState.Pressed, Pause, "Pysäyttää pelin. Paina uudelleen jatkaaksesi peliä");
-        Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
-
-        Keyboard.Listen(Key.Left, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, -NOPEUS);
-        Keyboard.Listen(Key.Right, ButtonState.Down, Liikuta, "Liikkuu vasemmalle", pelaaja, NOPEUS);
-        Keyboard.Listen(Key.Up, ButtonState.Pressed, Hyppaa, "Pelaaja hyppää", pelaaja, HYPPYNOPEUS);
-
-        PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
+        int kentastaSaadutPisteet = pelaajanPisteet.Value;
+        KokonaisPisteet(kentastaSaadutPisteet);
+        kenttaNro++;
+        LopetusvalikkoMaali();
     }
+
+
+    /// <summary>
+    /// Peli alkaa, kun alkuvalikosta painetaan näppäintä "Aloita peli"
+    /// </summary>
+    //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
+    private void AloitaPeli()
+    {
+        //TODO: pystyykö tekemään niin, että peli ruutu tulee näkyviin vasta kun painaa "Aloita peli"?
+    }
+
 
     /// <summary>
     /// Mahdollistaa kentän aloittamisen alusta pelaajan tuhoutuessa tai päästessä maaliin.
     /// </summary>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/KentanTekeminen (viitattu 28.2.2021)
-    void AloitaAlusta()
+    private void AloitaAlusta()
     {
+        if (kenttaNro > 1)
+        {
+            kenttaNro--;
+        }
         ClearAll();
-        LuoKentta();
-        LisaaLaskuri();
-        LisaaNappaimet();
-
-        IsPaused = true;
-        Pause();
+        VaihdaTasoa();
     }
 
 
@@ -317,29 +310,13 @@ public class PingviiniPeli : PhysicsGame
     /// Luo alkuvalikon
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
-    public void LuoAlkuvalikko()
+    private void LuoAlkuvalikko()
     {
-        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Pingviinin pako", "Aloita peli", "Parhaat pisteet", "Lopeta");
+        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Pingviinin pako", "Aloita peli", "Lopeta");
         alkuvalikko.AddItemHandler(0, AloitaPeli);
-        alkuvalikko.AddItemHandler(1, ParhaatPisteet);
-        alkuvalikko.AddItemHandler(2, Exit);
+        alkuvalikko.AddItemHandler(1, Exit);
         alkuvalikko.Color = Color.LightBlue;
         Add(alkuvalikko);
-
-        //TODO: Widgetiksi
-    }
-
-    /// <summary>
-    /// Lopetusvalikko, kun pelaaja pääsee maaliin.
-    /// </summary>
-    public void LopetusvalikkoMaali()
-    {
-        MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Onneksi olkoon! Pääsit turvallisesti kotiin.", "Yritä uudestaan", "Parhaat pisteet", "Lopeta");
-        lopetusvalikko.AddItemHandler(0, AloitaAlusta);               
-        lopetusvalikko.AddItemHandler(1, ParhaatPisteet);
-        lopetusvalikko.AddItemHandler(2, Exit);
-        lopetusvalikko.Color = Color.LightBlue;
-        Add(lopetusvalikko);
 
         //TODO: Widgetiksi
     }
@@ -348,7 +325,7 @@ public class PingviiniPeli : PhysicsGame
     /// <summary>
     /// Lopetusvalikko, kun pelaajan hahmo tuhoutuu törmätessään veteen tai merileopardiin.
     /// </summary>
-    public void LopetusvalikkoTuhoutuessa()
+    private void LopetusvalikkoTuhoutuessa()
     {
         MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Voi ei, jouduit merileopardin kitaan.", "Yritä uudestaan", "Lopeta");
         lopetusvalikko.AddItemHandler(0, AloitaAlusta);
@@ -359,24 +336,67 @@ public class PingviiniPeli : PhysicsGame
         //TODO: Widgetiksi
     }
 
+
     /// <summary>
-    /// Peli alkaa, kun alkuvalikosta painetaan näppäintä "Aloita peli"
+    /// Lopetusvalikko, kun pelaaja pääsee maaliin.
     /// </summary>
-    //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
-    public void AloitaPeli()
+    private void LopetusvalikkoMaali()
     {
-        //TODO: pystyykö tekemään niin, että peli ruutu tulee näkyviin vasta kun painaa "Aloita peli"?
+        MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Onneksi olkoon! Pääsit turvallisesti kotiin.", "Seuraava taso", "Yritä uudestaan", "Lopeta"); 
+        lopetusvalikko.AddItemHandler(0, VaihdaTasoa);               
+        lopetusvalikko.AddItemHandler(1, AloitaAlusta);
+        lopetusvalikko.AddItemHandler(2, Exit);
+        lopetusvalikko.Color = Color.LightBlue;
+        Add(lopetusvalikko);
+
+        //TODO: Widgetiksi / aivan viimeinen lopetusvalikko, joka näyttää pelaajan yhteispisteet mahdollisuus aloittaa peli kokonaan alusta tai lopettaa / mahdollisuus nähdä yhteensä kerätyt pisteet aina, kun vaihtaa tasoa
     }
 
 
     /// <summary>
-    /// Näyttää 5 parhaan pelaajan pisteet
+    /// Pelaajan kaikista tasoista kerätyt pistemäärät.
     /// </summary>
-    //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
-    public void ParhaatPisteet()
+    private void KokonaisPisteet(int saadutPisteet)
     {
-        //TODO: HighScoreWindow pisteIkkuna = new HighScoreWindow("Parhaat psiteet", "Onneksi olkoon, pääsit listalle pisteillä %p! Syötä nimesi:", parhaatPisteet, pisteet.xml);
+       List <int> pisteetYhteensa = new List<int> ();
+       pisteetYhteensa.Add(saadutPisteet);
+       SummaaPisteet(pisteetYhteensa);
 
+        //TODO: lisää kentistä kerätyt pisteet listaan [0] = kenttä 1, [1] = kenttä 2, [2] kenttä 3
+    }
+
+
+    /// <summary>
+    /// Lasketaan yhteen pelaaja keräämät pisteet.
+    /// </summary>
+    /// <param name="pisteet">Lista pelaajan keräämistä pisteistä</param>
+    /// <returns>Pisteiden summa</returns>
+    /// <example>
+    /// <pre name="test">
+    ///  List<string> pisteet = new List<int>{ 0, 4, 2};
+    ///  SummaaPisteet(pisteet) === 6;
+    ///  pisteet = new List<int>{ 3, 5, 4};
+    ///  SummaaPisteet(pisteet) === 12;
+    ///  pisteet = new List<int>{ 0, 0, 0};
+    ///  SummaaPisteet(pisteet) === 0;
+    ///  pisteet = new List<int>();
+    ///  SummaaPisteet(pisteet) === 0;
+    /// </pre>
+    /// </example>
+    private static int SummaaPisteet(List<int> pisteet)
+    {
+        if (pisteet.Count == 0)
+        {
+            return 0;
+        }
+
+        int summa = 0;
+        for (int i = 0; i < pisteet.Count; i++)
+        {
+            summa = summa + pisteet[i];
+        }
+
+        return summa;
     }
 
 
@@ -387,7 +407,7 @@ public class PingviiniPeli : PhysicsGame
     /// <param name="y">Laskurinäytön keskipisteen y koordinaatti</param>
     /// <returns>pelaajan pisteet</returns>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2020)
-    public IntMeter LuoPistelaskuri(double x, double y)
+    private IntMeter LuoPistelaskuri(double x, double y)
     {
         IntMeter laskuri = new IntMeter(0);
 
@@ -406,7 +426,7 @@ public class PingviiniPeli : PhysicsGame
     /// Pelaajan pistelaskurin sijainnin määrittely.
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2021). Laskurin sijaintia muokattu.
-    public void LisaaLaskuri()
+    private void LisaaLaskuri()
     {
         pelaajanPisteet = LuoPistelaskuri(Screen.Right - 50.0, Screen.Top - 50.0);          //TODO: kokeile onko parempi vasemmassa reunassa?
     }
