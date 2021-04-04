@@ -14,5 +14,5 @@
              ###                                                                        
        P                   ##                 #          ##                            
       ####                                   ##      ##     *                *         
-  M                    *           *M   M   ###             #   ###  *M     ###      L 
+  M                    *           *   M    ###             #   ###  *M     ###      L 
 ####vvvvvvvvvvVvvvvvvv###vvVvvvvvv#############vvvvvvvvVvvvvvvvV########vVvvvvvvv########vvvvvv
