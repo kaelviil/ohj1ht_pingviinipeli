@@ -18,7 +18,7 @@ namespace Program
         [STAThread]
         static void Main()
         {
-            using (var game = new PingviiniPeli())
+            using (var game = new PingviininPako())
                 game.Run();
         }
     }

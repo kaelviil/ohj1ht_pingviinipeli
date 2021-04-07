@@ -22,7 +22,9 @@ using System.Collections.Generic;
 
 // Äänitehosteet ja grafiikka: Katri Viiliäinen
 
-public class PingviiniPeli : PhysicsGame
+//TODO: SummaaPisteet funktio toimii väärin, kun ketän aloittaa uudelleen. (säilyttää edellisen yrityksen pisteet)
+
+public class PingviininPako : PhysicsGame
 {
     private const double NOPEUS = 200;
     private const double HYPPYNOPEUS = 750;
@@ -49,14 +51,14 @@ public class PingviiniPeli : PhysicsGame
     private readonly SoundEffect merileopardiAani = LoadSoundEffect("merileopardiaani.wav");
 
 
-
     /// <summary>
-    /// Luodaan alkuvalikko ja kenttä.
+    /// Luodaan alkuvalikko pelin aloittamiseksi.
     /// </summary>
     public override void Begin()
     {
         LuoAlkuvalikko();
         Level.Background.Image = alkuvalikonKuva;
+        Level.BackgroundColor = Color.White;
         Level.Background.FitToLevel();
        
     }
@@ -94,12 +96,21 @@ public class PingviiniPeli : PhysicsGame
     /// </summary>
     private void LopetusvalikkoMaali()
     {
-        MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Onneksi olkoon! Pääsit turvallisesti kotiin.", "Seuraava taso", "Yritä uudestaan", "Lopeta");
+        MultiSelectWindow lopetusvalikko = new MultiSelectWindow("" , "Seuraava taso", "Yritä uudestaan", "Lopeta");
         lopetusvalikko.AddItemHandler(0, VaihdaKenttaa);
         lopetusvalikko.AddItemHandler(1, AloitaAlusta);
         lopetusvalikko.AddItemHandler(2, Exit);
         lopetusvalikko.Color = Color.LightBlue;
         Add(lopetusvalikko);
+
+        Label otsikko = new Label(430.0, 50.0, "Onneksi olkoon! Pääsit turvallisesti kotiin.");
+        otsikko.X = lopetusvalikko.X;
+        otsikko.Y = lopetusvalikko.Y + 250;
+        otsikko.Color = Color.LightBlue;
+        otsikko.TextColor = Color.Black;
+        Add(otsikko);
+
+        Pisteet(pelaajanPisteet, otsikko.X, otsikko.Y);
     }
 
 
@@ -167,6 +178,7 @@ public class PingviiniPeli : PhysicsGame
         kentta.SetTileMethod('m', LisaaMerileopardi);
         kentta.SetTileMethod('L', LisaaObjekti, "maali", "maali.png");
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
+
         Level.CreateBorders();
         Level.Background.Image = taustakuva;
         Level.Background.FitToLevel();
@@ -228,17 +240,17 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Luo merileopardin
+    /// Luo merileopardin.
     /// </summary>
     /// <param name="paikka">Paikka, johon merileopardit luodaan</param>
     /// <param name="leveys">Merileopardin leveys</param>
     /// <param name="korkeus">Merileopardin korkeus</param>
     private void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
     {
-        PlatformCharacter merileopardi = new PlatformCharacter(1.25 * leveys, 1.25 * korkeus);
+        PlatformCharacter merileopardi = new PlatformCharacter(leveys * 1.25, korkeus * 1.25);
         merileopardi.Position = paikka;
         merileopardi.Mass = 10.0;
-        merileopardi.Shape = Shape.Triangle;                            //Kolmion muotoinen, jotta törmäys pelaajna kanssa toimii tarkemmin.
+        merileopardi.Shape = Shape.Triangle;                            
         merileopardi.Image = merileopardiKuva;
         merileopardi.Tag = "merileopardi";
         MerileopardinLiike(merileopardi);
@@ -247,7 +259,7 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Aivot, joiden avulla merileopardi liikkuu tasolla edestakaisin.
+    /// Aivot, joiden avulla merileopardi liikkuu edestakaisin pinnoilla.
     /// </summary>
     /// <param name="hahmo">Merileopardi</param>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Aivot (viitattu 28.2.2021)
@@ -260,7 +272,7 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Määritellään pelaajan hahmon ominaisuuksia: massa sekä animaatiot. 
+    /// Määritellään pelaajan hahmon ominaisuuksia: muoto, massa sekä animaatiot. 
     /// Kutsutaan näppäimmet määrittävää aliohjelmaa sekä
     /// törmäylsenkäsittelijöitä.
     /// </summary>
@@ -296,12 +308,12 @@ public class PingviiniPeli : PhysicsGame
     //Lähde: Jypelin tasohyppelipelin pohja.
     private void LuoOhjaimet (PlatformCharacter pelaaja)
     {
-        Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");                                             
-        Keyboard.Listen(Key.Q, ButtonState.Pressed, Pause, "Pysäyttää pelin. Paina uudelleen jatkaaksesi peliä");       //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pause (viitattu 4.4.2021)
-        Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
         Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaPelaajaa, "Liikkuu vasemmalle", pelaaja, -NOPEUS);
         Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaPelaajaa, "Liikkuu oikealle", pelaaja, NOPEUS);
         Keyboard.Listen(Key.Up, ButtonState.Pressed, PelaajanHyppy, "Hyppää", pelaaja, HYPPYNOPEUS);
+        Keyboard.Listen(Key.Q, ButtonState.Pressed, Pause, "Pysäyttää pelin. Paina uudelleen jatkaaksesi peliä");       //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pause (viitattu 4.4.2021)
+        Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
+        Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
         PhoneBackButton.Listen(ConfirmExit, "Lopeta peli");
     }
 
@@ -331,7 +343,7 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Törmäyksenkäsittelijät, kun pelaajan hahmo törmää kerättäviin esinsiin (kalaan), merileopardiin, veteen tai maaliin.
+    /// Törmäyksenkäsittelijät, kun pelaajan hahmo törmää kerättävään esinseen (kalaan), merileopardiin, veteen tai maaliin.
     /// </summary>
     /// <param name="pelaaja">Pelaajan hamo</param>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Pong/Vaihe7 (viitattu 17.2.2021).
@@ -373,13 +385,13 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Pelaajan törmätessä maaliin peli loppuu.
+    /// Pelaajan törmätessä maaliin kokoanispistemäärään lisätään kentästä kerätyt pisteet sekä kasvatetaan kenttä numeroa.
     /// </summary>
     /// <param name="hahmo">pelaajan hahmo</param>
     /// <param name="kohde">merileopardi</param>
     private void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)
     {
-        PisteetKentista(pelaajanPisteet);
+        pisteetYhteensa.Add(pelaajanPisteet.Value);
         kenttaNro++;
         LopetusvalikkoMaali();
     }
@@ -419,26 +431,28 @@ public class PingviiniPeli : PhysicsGame
 
 
     /// <summary>
-    /// Pelaajan kaikista tasoista keräämät pisteet. Tulos tulostetaan ruudulle viimeisen kentän päätyttyä. 
+    /// Näyttää pelaajan kentästä keräämät pisteet sekä tämän koko pelin aikana keräämät pisteet. 
     /// </summary>
-    private void PisteetKentista(IntMeter keratytPisteet)
+    /// <param name="keratytPisteet">Pelaajan keräämät pisteet</param>
+    /// <param name="x">X koordinaatin sijainti</param>
+    /// <param name="y">Y koordinaatin sijainti</param>
+    private void Pisteet(IntMeter keratytPisteet, double x, double y)
     {
-        pisteetYhteensa.Add(keratytPisteet.Value);
-        int summa = SummaaPisteet(pisteetYhteensa);
+        int summa = SummaaPisteet(this.pisteetYhteensa);
 
-        if (kenttaNro == 3)
-        {
-            Label pisteRuutu = new Label(430.0, 50.0, "Keräsit yhteensä " + summa.ToString() + " kalaa");
-            pisteRuutu.X = Screen.Left + 512;
-            pisteRuutu.Y = Screen.Top - 240;
-            pisteRuutu.Color = Color.LightBlue;
-            pisteRuutu.TextColor = Color.Black;
-            Add(pisteRuutu);
-        }
+        Label pisteetYhteensa = new Label(430.0, 50.0, "Olet kerännyt yhteensä " + summa.ToString() + " kalaa");
+        pisteetYhteensa.X = x;
+        pisteetYhteensa.Y = y - 100;
+        pisteetYhteensa.Color = Color.LightBlue;
+        pisteetYhteensa.TextColor = Color.Black;
+        Add(pisteetYhteensa);
 
-        //TODO: POISTA, testaa funktion toimintaa tason vaihtuessa; MessageDisplay.Add("Pisteitä " + summa.ToString());
-
-        //TODO: pisteiden tulostus niin, että joka kentän lopussa näkyy kentästä kerätyst pisteet SEKÄ pisteiden yhteismäärä.
+        Label pisteetKentasta = new Label(430.0, 50.0, "Keräsit kentästä " + pelaajanPisteet.Value + " kalaa");
+        pisteetKentasta.X = x;
+        pisteetKentasta.Y = y - 50;
+        pisteetKentasta.Color = Color.LightBlue;
+        pisteetKentasta.TextColor = Color.Black;
+        Add(pisteetKentasta);
     }
 
 
