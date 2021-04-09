@@ -4,6 +4,8 @@ using Jypeli.Controls;
 using Jypeli.Widgets;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using System.IO;
 
 ///@author Katri Viiliäinen
 ///@version 12.3.2021
@@ -22,17 +24,19 @@ using System.Collections.Generic;
 
 // Äänitehosteet ja grafiikka: Katri Viiliäinen
 
-//TODO: SummaaPisteet funktio toimii väärin, kun ketän aloittaa uudelleen. (säilyttää edellisen yrityksen pisteet)
+//TODO: ohjeet tulee oman koneen levyasemalta, pystyykö muuttamaan niin, että ei sidottu yhteen koneeseen?
 
 public class PingviininPako : PhysicsGame
 {
     private const double NOPEUS = 200;
     private const double HYPPYNOPEUS = 750;
     private const int RUUDUN_KOKO = 30;
+    private const string POLKU = @"C:\ohjelmointi\kurssit\ohj1\harkka\PingviiniPeli\PingviiniPeli\Content\ohjeteksti.txt";
 
     private int kenttaNro = 1;
     private IntMeter pelaajanPisteet;
     private List<int> pisteetYhteensa = new List<int>();
+    private EasyHighScore parhaatPisteet = new EasyHighScore();
 
     private readonly Image alkuvalikonKuva = LoadImage("alkuvalikonkuva.png");
     private readonly Image taustakuva = LoadImage("tausta.png");
@@ -60,7 +64,6 @@ public class PingviininPako : PhysicsGame
         Level.Background.Image = alkuvalikonKuva;
         Level.BackgroundColor = Color.White;
         Level.Background.FitToLevel();
-       
     }
 
 
@@ -70,11 +73,35 @@ public class PingviininPako : PhysicsGame
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
     private void LuoAlkuvalikko()
     {
-        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Pingviinin pako", "Aloita peli", "Lopeta");
+        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Pingviinin pako", "Aloita peli", "Ohjeet", "Parhaat pisteet", "Lopeta");
         alkuvalikko.AddItemHandler(0, VaihdaKenttaa);
-        alkuvalikko.AddItemHandler(1, Exit);
+        alkuvalikko.AddItemHandler(1, Ohjeet);
+        alkuvalikko.AddItemHandler(2, Top10);
+        alkuvalikko.AddItemHandler(3, Exit);
         alkuvalikko.Color = Color.LightBlue;
         Add(alkuvalikko);
+    }
+
+
+    /// <summary>
+    /// Luo alkuvalikon, pelin loputtua
+    /// </summary>
+    //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021) ja https://trac.cc.jyu.fi/projects/npo/wiki/HighScore (viitattu 9.4.2021)
+    private void PalaaAlkuvalikkoon(Window sender)
+    {
+        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Pingviinin pako", "Aloita peli", "Parhaat pisteet", "Ohjeet", "Lopeta");
+        alkuvalikko.AddItemHandler(0, VaihdaKenttaa);
+        alkuvalikko.AddItemHandler(1, Top10);
+        alkuvalikko.AddItemHandler(2, Ohjeet);
+        alkuvalikko.AddItemHandler(3, Exit);
+        alkuvalikko.Color = Color.LightBlue;
+        Add(alkuvalikko);
+
+        if (kenttaNro == 3)
+        {
+            IsPaused = true;
+            PalaaEnsimmaiseenKenttaan();
+        }
     }
 
 
@@ -95,28 +122,20 @@ public class PingviininPako : PhysicsGame
     /// Lopetusvalikko, kun pelaaja pääsee maaliin.
     /// </summary>
     private void LopetusvalikkoMaali()
-    {
-        MultiSelectWindow lopetusvalikko = new MultiSelectWindow("" , "Seuraava taso", "Yritä uudestaan", "Lopeta");
-        lopetusvalikko.AddItemHandler(0, VaihdaKenttaa);
-        lopetusvalikko.AddItemHandler(1, AloitaAlusta);
-        lopetusvalikko.AddItemHandler(2, Exit);
-        lopetusvalikko.Color = Color.LightBlue;
-        Add(lopetusvalikko);
-
-        Label otsikko = new Label(430.0, 50.0, "Onneksi olkoon! Pääsit turvallisesti kotiin.");
-        otsikko.X = lopetusvalikko.X;
-        otsikko.Y = lopetusvalikko.Y + 250;
-        otsikko.Color = Color.LightBlue;
-        otsikko.TextColor = Color.Black;
-        Add(otsikko);
-
-        Pisteet(pelaajanPisteet, otsikko.X, otsikko.Y);
+    { 
+            MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Onneksi olkoon! Pääsit turvallisesti maaliin.", "Seuraava taso", "Lopeta");
+            lopetusvalikko.AddItemHandler(0, VaihdaKenttaa);
+            lopetusvalikko.AddItemHandler(1, Exit);
+            lopetusvalikko.Color = Color.LightBlue;
+            Add(lopetusvalikko);
+            Pisteet(pelaajanPisteet, lopetusvalikko.X, lopetusvalikko.Top);
     }
+
 
 
     /// <summary>
     /// Pelin kenttä vaihtuu sen perusteella, mikä kentän numero on sen vaihtuessa.
-    /// Määritellään samalla kentän painovoima sekä kamera.
+    /// Määritellään samalla kentän painovoima sekä kamera, pause ominaisuus ja lisätään laskuri, ClearAll() komennon vuoksi.
     /// Pelin saa laitettua pauselle.
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/KenttienLiittaminen (viitattu 17.3.2021) ja https://trac.cc.jyu.fi/projects/npo/wiki/Pause (viitattu 4.4.2021)
@@ -143,16 +162,75 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
+    /// Tyhjentää pelaajan yhteensä keräämät pisteet sisältävän taulukon sekä mahdollistaa ensimmäisen kentän aloittamisen pelin loputtua jo kerran. 
+    /// </summary>
+    private void PalaaEnsimmaiseenKenttaan()
+    {
+        kenttaNro = 1;
+
+        int i = 0;
+        while (i < pisteetYhteensa.Count)
+        {
+            if (pisteetYhteensa[i] >= int.MinValue) pisteetYhteensa.RemoveAt(i);
+            else i++;
+        }
+    }
+
+    /// <summary>
+    /// Valikko, joka näyttää parhaan 10 pelaajan pisteet
+    /// </summary>
+    private void Top10()
+    {
+        parhaatPisteet.Show();
+        parhaatPisteet.HighScoreWindow.Closed += PalaaAlkuvalikkoon;
+    }
+
+
+    /// <summary>
+    /// Ohjesivu
+    /// </summary>
+    private void Ohjeet()
+    { 
+        MultiSelectWindow valikko = new MultiSelectWindow("Ohjeet", "Takaisin");
+        valikko.AddItemHandler(0, LuoAlkuvalikko);
+        valikko.Closed += PalaaAlkuvalikkoon;
+
+        Label ohjeet = new Label(500.0, 400.0);
+        ohjeet.Color = Color.LightBlue;
+        ohjeet.Y = valikko.Top + 250;
+        ohjeet.TextColor = Color.Black;
+        ohjeet.Text = LueTeksti();
+        valikko.Add(ohjeet);
+
+        Add(valikko);
+    }
+
+
+    /// <summary>
+    /// Luetaan tiedot ulkoisesta tietolähteestä ja muunnetaan ne yhdeksi String-olioksi, niin, että jokaisien rivin väliin tulee rivinvaihto.
+    /// </summary>
+    /// <returns>Palauttaa </returns>
+    private String LueTeksti()
+    {
+        string[] luetutRivit = File.ReadAllLines(POLKU);
+        StringBuilder temp = new StringBuilder();
+        foreach (string merkkijono in luetutRivit)
+        {
+            temp.Append(merkkijono + '\n');
+        }
+
+        string teksti = temp.ToString();  
+        return teksti;
+    }
+
+
+    /// <summary>
     /// Mahdollistaa kentän aloittamisen alusta pelaajan tuhoutuessa tai päästessä maaliin.
     /// </summary>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/KentanTekeminen (viitattu 28.2.2021)
     private void AloitaAlusta()
     {
-        if (kenttaNro > 1)
-        {
-            kenttaNro--;
-        }
-
+        kenttaNro--;
         ClearAll();
         LisaaLaskuri();
         VaihdaKenttaa();
@@ -170,13 +248,13 @@ public class PingviininPako : PhysicsGame
     {
         TileMap kentta = TileMap.FromLevelAsset(tasonTiedostonimi);
         kentta.SetTileMethod('#', LisaaTaso);
-        kentta.SetTileMethod('V', LisaaVesi, "vesitekstuurimerileopardi.png");
-        kentta.SetTileMethod('v', LisaaVesi, "vesitekstuuri.png");
-        kentta.SetTileMethod('*', LisaaObjekti, "kala", "kala.png");
+        kentta.SetTileMethod('V', LisaaObjekti, "vesi", "vesitekstuurimerileopardi.png");
+        kentta.SetTileMethod('v', LisaaObjekti, "vesi", "vesitekstuuri.png");
+        kentta.SetTileMethod('*', LisaaObjekti, "kala", "kala.png", 1.25);
         kentta.SetTileMethod('P', LisaaPelaaja);
         kentta.SetTileMethod('M', LisaaMerileopardi);
         kentta.SetTileMethod('m', LisaaMerileopardi);
-        kentta.SetTileMethod('L', LisaaObjekti, "maali", "maali.png");
+        kentta.SetTileMethod('L', LisaaObjekti, "maali", "maali.png", 1.25);
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
 
         Level.CreateBorders();
@@ -202,26 +280,28 @@ public class PingviininPako : PhysicsGame
     }
 
 
+
     /// <summary>
-    /// Aliohjelma veden luomiseksi.
+    /// Luo staattisen objektin, jonka kokoa voi muuttaa kertoimen avulla.
     /// </summary>
-    /// <param name="paikka">Paikka, johon vesipalikka luodaan</param>
-    /// <param name="leveys">Vesipalikan leveys</param>
-    /// <param name="korkeus">Vesipalikan korkeus</param>
-    /// <param name="kuvanNimi">Vesipalikan kuvantiedoston nimi</param>
-    private void LisaaVesi(Vector paikka, double leveys, double korkeus, string kuvanNimi)
+    /// <param name="paikka">Paikka, johon objekti luodaan</param>
+    /// <param name="leveys">Objektin leveys</param>
+    /// <param name="korkeus">Objektin korkeus</param>
+    /// <param name="tagi">Objektin tägi</param>
+    /// <param name="kuvanNimi">Objektin kuvatiedoston nimi</param>
+    /// <param name="kerroin">Kerroin, jonka avulla objektin kokoa voi muuttaa</param>
+    private void LisaaObjekti(Vector paikka, double leveys, double korkeus, string tagi, string kuvanNimi, double kerroin)
     {
-        PhysicsObject vesi = PhysicsObject.CreateStaticObject(leveys, korkeus);
-        vesi.Position = paikka;
-        vesi.Image = LoadImage(kuvanNimi);
-        vesi.IgnoresCollisionResponse = true;
-        vesi.Tag = "vesi";
-        Add(vesi);
+        PhysicsObject objekti = PhysicsObject.CreateStaticObject(leveys * kerroin, korkeus * kerroin);
+        objekti.Position = paikka;
+        objekti.Image = LoadImage(kuvanNimi);
+        objekti.IgnoresCollisionResponse = true;
+        objekti.Tag = tagi;
+        Add(objekti);
     }
 
-
     /// <summary>
-    /// Luo staattisen objektin: kala tai maali. 
+    /// Luo staattisen objektin 
     /// </summary>
     /// <param name="paikka">Paikka, johon objekti luodaan</param>
     /// <param name="leveys">Objektin leveys</param>
@@ -230,7 +310,7 @@ public class PingviininPako : PhysicsGame
     /// <param name="kuvanNimi">Objektin kuvatiedoston nimi</param>
     private void LisaaObjekti(Vector paikka, double leveys, double korkeus, string tagi, string kuvanNimi)
     {
-        PhysicsObject objekti = PhysicsObject.CreateStaticObject(leveys * 1.25, korkeus * 1.25);
+        PhysicsObject objekti = PhysicsObject.CreateStaticObject(leveys, korkeus);
         objekti.Position = paikka;
         objekti.Image = LoadImage(kuvanNimi);
         objekti.IgnoresCollisionResponse = true;
@@ -392,8 +472,17 @@ public class PingviininPako : PhysicsGame
     private void TormaaMaaliin(PhysicsObject hahmo, PhysicsObject kohde)
     {
         pisteetYhteensa.Add(pelaajanPisteet.Value);
-        kenttaNro++;
-        LopetusvalikkoMaali();
+
+        if (kenttaNro == 3)
+        {
+            parhaatPisteet.EnterAndShow(SummaaPisteet(pisteetYhteensa));
+            parhaatPisteet.HighScoreWindow.Closed += PalaaAlkuvalikkoon;              //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/HighScore (viitattu 9.4.2021)
+        }
+        else
+        {
+            kenttaNro++;
+            LopetusvalikkoMaali();
+        }
     }
 
 
@@ -442,14 +531,14 @@ public class PingviininPako : PhysicsGame
 
         Label pisteetYhteensa = new Label(430.0, 50.0, "Olet kerännyt yhteensä " + summa.ToString() + " kalaa");
         pisteetYhteensa.X = x;
-        pisteetYhteensa.Y = y - 100;
+        pisteetYhteensa.Y = y + 35;
         pisteetYhteensa.Color = Color.LightBlue;
         pisteetYhteensa.TextColor = Color.Black;
         Add(pisteetYhteensa);
 
         Label pisteetKentasta = new Label(430.0, 50.0, "Keräsit kentästä " + pelaajanPisteet.Value + " kalaa");
         pisteetKentasta.X = x;
-        pisteetKentasta.Y = y - 50;
+        pisteetKentasta.Y = pisteetYhteensa.Top + 10;
         pisteetKentasta.Color = Color.LightBlue;
         pisteetKentasta.TextColor = Color.Black;
         Add(pisteetKentasta);

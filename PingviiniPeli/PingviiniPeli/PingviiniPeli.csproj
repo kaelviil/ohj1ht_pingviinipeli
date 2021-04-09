@@ -58,6 +58,9 @@
         <None Update="Content\norsu.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Content\ohjeteksti.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Update="Content\pingviini.png">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

@@ -1,0 +1,14 @@
+Pingviini on eksynyt jäätikölle etsiessään ruokaa.
+
+Tehtävänäsi on ohjata tämä pieni vaappuja takaisin 
+kotiin yhdyskuntansa luo.
+
+Väistetle vaaralallisia merileopardeja, 
+jotka vaanivat niin vedessä kuin jään pinnallakin.
+Älä kuitenkaan unohda kerätä kaloja!
+
+Ohjaimet:
+< ^ >   Liikuta pingviiniä
+Q        Tauko 
+F1      Ohjeet
+ESC    Lopeta peli
