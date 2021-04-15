@@ -260,7 +260,6 @@ public class PingviininPako : PhysicsGame
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/KentanTekeminen (viitattu 28.2.2021)
     private void YritaUudestaan()
     {
-        kenttaNro--;
         ClearAll();
         LisaaLaskuri();
         VaihdaKenttaa();
@@ -473,7 +472,6 @@ public class PingviininPako : PhysicsGame
     /// <param name="kohde">kohde, johon pelaaja törmää</param>
     private void TormaaVeteenTaiLeopardiin(PhysicsObject pelaaja, PhysicsObject kohde)
     {
-        kenttaNro++;
         merileopardiAani.Play();
         pelaaja.Destroy();
         LopetusvalikkoTuhoutuessa();
