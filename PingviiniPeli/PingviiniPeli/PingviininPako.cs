@@ -8,7 +8,7 @@ using System.Text;
 using System.IO;
 
 ///@author Katri Viiliäinen
-///@version 12.3.2021
+///@version 15.4.2021
 ///
 /// 
 /// <summary>
@@ -28,16 +28,43 @@ using System.IO;
 
 public class PingviininPako : PhysicsGame
 {
+    /// <summary>
+    /// Liikkuvien olioiden nopeus.
+    /// </summary>
     private const double NOPEUS = 200;
+    /// <summary>
+    /// Liikkuien olioiden nopeus hypätessä.
+    /// </summary>
     private const double HYPPYNOPEUS = 750;
+    /// <summary>
+    /// Ruudun koko.
+    /// </summary>
     private const int RUUDUN_KOKO = 30;
+    /// <summary>
+    /// Lähde ohjesivun tekstiin.
+    /// </summary>
     private const string POLKU = @"C:\ohjelmointi\kurssit\ohj1\harkka\PingviiniPeli\PingviiniPeli\Content\ohjeteksti.txt";
 
+    /// <summary>
+    /// Kenttä numero, kenttä vaihtuu luvun perusteella.
+    /// </summary>
     private int kenttaNro = 1;
+    /// <summary>
+    /// Pistemittari, joka kerää tietoa pelaajan kentästä keräämistä pisteistä
+    /// </summary>
     private IntMeter pelaajanPisteet;
+    /// <summary>
+    /// Lista, johon tallennetaan pelaajan kentistä keräämät pisteet
+    /// </summary>
     private List<int> pisteetYhteensa = new List<int>();
+    /// <summary>
+    /// 10 parhaan pelaajan pisteet
+    /// </summary>
     private EasyHighScore parhaatPisteet = new EasyHighScore();
 
+    /// <summary>
+    /// Kuvatiedostot
+    /// </summary>
     private readonly Image alkuvalikonKuva = LoadImage("alkuvalikonkuva.png");
     private readonly Image taustakuva = LoadImage("tausta.png");
     private readonly Image pelaajanKavely = LoadImage("pingviinikavely.png"); 
@@ -51,6 +78,9 @@ public class PingviininPako : PhysicsGame
     private readonly Image vesiKuva = LoadImage("vesitekstuuri.png");
     private readonly Image lumiKuva = LoadImage("lumitekstuuri.png");
 
+    /// <summary>
+    /// Äänitehosteet
+    /// </summary>
     private readonly SoundEffect kalaAani = LoadSoundEffect("kalaaani.wav");
     private readonly SoundEffect merileopardiAani = LoadSoundEffect("merileopardiaani.wav");
 
@@ -111,7 +141,7 @@ public class PingviininPako : PhysicsGame
     private void LopetusvalikkoTuhoutuessa()
     {
         MultiSelectWindow lopetusvalikko = new MultiSelectWindow("Voi ei, jouduit merileopardin kitaan.", "Yritä uudestaan", "Lopeta");
-        lopetusvalikko.AddItemHandler(0, AloitaAlusta);
+        lopetusvalikko.AddItemHandler(0, YritaUudestaan);
         lopetusvalikko.AddItemHandler(1, Exit);
         lopetusvalikko.Color = Color.LightBlue;
         Add(lopetusvalikko);
@@ -130,7 +160,6 @@ public class PingviininPako : PhysicsGame
             Add(lopetusvalikko);
             Pisteet(pelaajanPisteet, lopetusvalikko.X, lopetusvalikko.Top);
     }
-
 
 
     /// <summary>
@@ -176,6 +205,7 @@ public class PingviininPako : PhysicsGame
         }
     }
 
+
     /// <summary>
     /// Valikko, joka näyttää parhaan 10 pelaajan pisteet
     /// </summary>
@@ -209,7 +239,7 @@ public class PingviininPako : PhysicsGame
     /// <summary>
     /// Luetaan tiedot ulkoisesta tietolähteestä ja muunnetaan ne yhdeksi String-olioksi, niin, että jokaisien rivin väliin tulee rivinvaihto.
     /// </summary>
-    /// <returns>Palauttaa </returns>
+    /// <returns>Palauttaa ulkoisesta lähteestä luetun tekstin.</returns>
     private String LueTeksti()
     {
         string[] luetutRivit = File.ReadAllLines(POLKU);
@@ -225,10 +255,10 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Mahdollistaa kentän aloittamisen alusta pelaajan tuhoutuessa tai päästessä maaliin.
+    /// Mahdollistaa kentän aloittamisen alusta pelaajan tuhoutuessa.
     /// </summary>
     // Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/KentanTekeminen (viitattu 28.2.2021)
-    private void AloitaAlusta()
+    private void YritaUudestaan()
     {
         kenttaNro--;
         ClearAll();
@@ -280,7 +310,6 @@ public class PingviininPako : PhysicsGame
     }
 
 
-
     /// <summary>
     /// Luo staattisen objektin, jonka kokoa voi muuttaa kertoimen avulla.
     /// </summary>
@@ -300,8 +329,9 @@ public class PingviininPako : PhysicsGame
         Add(objekti);
     }
 
+
     /// <summary>
-    /// Luo staattisen objektin 
+    /// Luo staattisen objektin. 
     /// </summary>
     /// <param name="paikka">Paikka, johon objekti luodaan</param>
     /// <param name="leveys">Objektin leveys</param>
@@ -323,8 +353,8 @@ public class PingviininPako : PhysicsGame
     /// Luo merileopardin.
     /// </summary>
     /// <param name="paikka">Paikka, johon merileopardit luodaan</param>
-    /// <param name="leveys">Merileopardin leveys</param>
-    /// <param name="korkeus">Merileopardin korkeus</param>
+    /// <param name="leveys">Olion leveys</param>
+    /// <param name="korkeus">olion korkeus</param>
     private void LisaaMerileopardi(Vector paikka, double leveys, double korkeus)
     {
         PlatformCharacter merileopardi = new PlatformCharacter(leveys * 1.25, korkeus * 1.25);
@@ -465,7 +495,7 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Pelaajan törmätessä maaliin kokoanispistemäärään lisätään kentästä kerätyt pisteet sekä kasvatetaan kenttä numeroa.
+    /// Pelaajan törmätessä maaliin kokoanispistemäärään lisätään kentästä kerätyt pisteet sekä luodaan lopetusvalikot tilanteesta riippuen.
     /// </summary>
     /// <param name="hahmo">pelaajan hahmo</param>
     /// <param name="kohde">merileopardi</param>
