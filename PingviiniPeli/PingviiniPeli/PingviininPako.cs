@@ -46,24 +46,24 @@ public class PingviininPako : PhysicsGame
     private const string POLKU = @"C:\ohjelmointi\kurssit\ohj1\harkka\PingviiniPeli\PingviiniPeli\Content\ohjeteksti.txt";
 
     /// <summary>
-    /// Kenttä numero, kenttä vaihtuu luvun perusteella.
+    /// Kenttä numero. Kenttä vaihtuu luvun perusteella.
     /// </summary>
     private int kenttaNro = 1;
     /// <summary>
-    /// Pistemittari, joka kerää tietoa pelaajan kentästä keräämistä pisteistä
+    /// Pistemittari, joka kerää tietoa pelaajan kentästä keräämistä pisteistä.
     /// </summary>
     private IntMeter pelaajanPisteet;
     /// <summary>
-    /// Lista, johon tallennetaan pelaajan kentistä keräämät pisteet
+    /// Lista, johon tallennetaan pelaajan kentistä keräämät pisteet.
     /// </summary>
     private List<int> pisteetYhteensa = new List<int>();
     /// <summary>
-    /// 10 parhaan pelaajan pisteet
+    /// 10 parhaan pelaajan pisteet.
     /// </summary>
     private EasyHighScore parhaatPisteet = new EasyHighScore();
 
     /// <summary>
-    /// Kuvatiedostot
+    /// Kuvatiedostot.
     /// </summary>
     private readonly Image alkuvalikonKuva = LoadImage("alkuvalikonkuva.png");
     private readonly Image taustakuva = LoadImage("tausta.png");
@@ -79,7 +79,7 @@ public class PingviininPako : PhysicsGame
     private readonly Image lumiKuva = LoadImage("lumitekstuuri.png");
 
     /// <summary>
-    /// Äänitehosteet
+    /// Äänitehosteet.
     /// </summary>
     private readonly SoundEffect kalaAani = LoadSoundEffect("kalaaani.wav");
     private readonly SoundEffect merileopardiAani = LoadSoundEffect("merileopardiaani.wav");
@@ -98,7 +98,7 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Luo alkuvalikon
+    /// Luo alkuvalikon.
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021)
     private void LuoAlkuvalikko()
@@ -114,7 +114,7 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Luo alkuvalikon, pelin loputtua
+    /// Luo alkuvalikon, pelin loputtua.
     /// </summary>
     //Lähde: https://trac.cc.jyu.fi/projects/npo/wiki/Alkuvalikko (viitattu 26.2.2021) ja https://trac.cc.jyu.fi/projects/npo/wiki/HighScore (viitattu 9.4.2021)
     private void PalaaAlkuvalikkoon(Window sender)
@@ -207,7 +207,7 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Valikko, joka näyttää parhaan 10 pelaajan pisteet
+    /// Valikko, joka näyttää parhaan 10 pelaajan pisteet.
     /// </summary>
     private void Top10()
     {
@@ -217,7 +217,7 @@ public class PingviininPako : PhysicsGame
 
 
     /// <summary>
-    /// Ohjesivu
+    /// Ohjesivu.
     /// </summary>
     private void Ohjeet()
     { 
